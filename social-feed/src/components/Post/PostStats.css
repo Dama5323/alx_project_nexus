@@ -1,0 +1,62 @@
+.post-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #e1e8ed;
+  border-bottom: 1px solid #e1e8ed;
+  margin-top: 12px;
+}
+
+.post-stats__engagement {
+  display: flex;
+  gap: 16px;
+}
+
+.post-stats__item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  gap: 4px;
+  transition: color 0.2s;
+  color: #657786;
+}
+
+.post-stats__item:hover {
+  color: #14171a;
+  text-decoration: underline;
+}
+
+.post-stats__count {
+  font-weight: 700;
+  color: #14171a;
+}
+
+.post-stats__label {
+  color: #657786;
+}
+
+.post-stats__views {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #657786;
+  font-size: 14px;
+}
+
+.post-stats__views svg {
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .post-stats {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .post-stats__engagement {
+    gap: 12px;
+  }
+}

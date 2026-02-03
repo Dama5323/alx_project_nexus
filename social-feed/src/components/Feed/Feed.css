@@ -1,0 +1,130 @@
+.feed {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  min-height: 100vh;
+}
+
+.feed__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e1e8ed;
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.feed__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: #14171a;
+}
+
+.feed__refresh {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #1DA1F2;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed__refresh:hover {
+  background: rgba(29, 161, 242, 0.1);
+  transform: rotate(180deg);
+}
+
+.feed__loading {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed__posts {
+  display: flex;
+  flex-direction: column;
+}
+
+.feed__sentinel {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.feed__end {
+  padding: 40px 20px;
+  text-align: center;
+  color: #657786;
+}
+
+.feed__end p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.feed__empty {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.feed__empty h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0 0 12px 0;
+}
+
+.feed__empty p {
+  font-size: 16px;
+  color: #657786;
+  margin: 0;
+}
+
+.feed__error {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.feed__error h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #E0245E;
+  margin: 0 0 12px 0;
+}
+
+.feed__error p {
+  font-size: 16px;
+  color: #657786;
+  margin: 0 0 24px 0;
+}
+
+.feed__error button {
+  padding: 12px 24px;
+  background: #1DA1F2;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.feed__error button:hover {
+  background: #1a8cd8;
+}
+
+@media (min-width: 769px) {
+  .feed {
+    border-left: 1px solid #e1e8ed;
+    border-right: 1px solid #e1e8ed;
+  }
+}

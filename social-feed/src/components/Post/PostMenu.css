@@ -1,0 +1,17 @@
+.post-menu__trigger {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #657786;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.post-menu__trigger:hover {
+  background: rgba(29, 161, 242, 0.1);
+  color: #1DA1F2;
+}

@@ -1,0 +1,23 @@
+.views-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(29, 161, 242, 0.1);
+  border-radius: 12px;
+  color: #1DA1F2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.views-counter__icon {
+  flex-shrink: 0;
+}
+
+.views-counter__count {
+  color: #14171a;
+}
+
+.views-counter__label {
+  color: #657786;
+}

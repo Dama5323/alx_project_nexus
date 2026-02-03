@@ -1,0 +1,106 @@
+.reactions-list {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reactions-list__tabs {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e1e8ed;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.reactions-list__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.reactions-list__tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: none;
+  border: 2px solid #e1e8ed;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #657786;
+}
+
+.reactions-list__tab:hover {
+  background: rgba(29, 161, 242, 0.1);
+  border-color: #1DA1F2;
+}
+
+.reactions-list__tab--active {
+  background: rgba(29, 161, 242, 0.1);
+  border-color: #1DA1F2;
+  color: #1DA1F2;
+}
+
+.reactions-list__tab-emoji {
+  font-size: 18px;
+}
+
+.reactions-list__tab-count {
+  font-size: 14px;
+}
+
+.reactions-list__content {
+  flex: 1;
+  padding-top: 16px;
+  overflow-y: auto;
+}
+
+.reactions-list__empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #657786;
+}
+
+.reactions-list__users {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reactions-list__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.reactions-list__user:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.reactions-list__user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reactions-list__user-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #14171a;
+}
+
+.reactions-list__user-username {
+  font-size: 14px;
+  color: #657786;
+}
+
+.reactions-list__user-reaction {
+  font-size: 24px;
+}

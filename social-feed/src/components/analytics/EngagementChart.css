@@ -1,0 +1,104 @@
+.engagement-chart {
+  padding: 24px;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+}
+
+.engagement-chart__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0 0 16px 0;
+}
+
+.engagement-chart__legend {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.engagement-chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #657786;
+}
+
+.engagement-chart__legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.engagement-chart__legend-dot--views {
+  background: #1DA1F2;
+}
+
+.engagement-chart__legend-dot--engagement {
+  background: #17BF63;
+}
+
+.engagement-chart__graph {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 200px;
+  padding: 0 0 32px 0;
+  gap: 8px;
+}
+
+.engagement-chart__bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.engagement-chart__bars {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+}
+
+.engagement-chart__bar {
+  width: 40%;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.engagement-chart__bar:hover {
+  opacity: 0.8;
+  transform: translateY(-4px);
+}
+
+.engagement-chart__bar--views {
+  background: linear-gradient(to top, #1DA1F2, #64c7ff);
+}
+
+.engagement-chart__bar--engagement {
+  background: linear-gradient(to top, #17BF63, #66e89e);
+}
+
+.engagement-chart__label {
+  font-size: 11px;
+  color: #657786;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .engagement-chart__graph {
+    height: 150px;
+  }
+
+  .engagement-chart__label {
+    font-size: 10px;
+  }
+}

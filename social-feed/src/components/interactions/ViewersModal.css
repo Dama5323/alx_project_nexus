@@ -1,0 +1,84 @@
+.viewers-modal {
+  min-height: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.viewers-modal__loading,
+.viewers-modal__error,
+.viewers-modal__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #657786;
+}
+
+.viewers-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.viewers-modal__viewer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.viewers-modal__viewer:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.viewers-modal__viewer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.viewers-modal__viewer-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #14171a;
+}
+
+.viewers-modal__viewer-username {
+  font-size: 14px;
+  color: #657786;
+}
+
+.viewers-modal__viewer-time {
+  font-size: 13px;
+  color: #657786;
+  white-space: nowrap;
+}
+
+.viewers-modal__load-more {
+  padding: 16px;
+  text-align: center;
+}
+
+.viewers-modal__load-more button {
+  padding: 10px 24px;
+  background: #1DA1F2;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.viewers-modal__load-more button:hover:not(:disabled) {
+  background: #1a8cd8;
+}
+
+.viewers-modal__load-more button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,121 @@
+.reach-metrics {
+  padding: 24px;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 12px;
+}
+
+.reach-metrics__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #14171a;
+  margin: 0 0 24px 0;
+}
+
+.reach-metrics__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.reach-metrics__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px;
+  background: #f7f9fa;
+  border-radius: 8px;
+}
+
+.reach-metrics__stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1DA1F2;
+}
+
+.reach-metrics__stat-label {
+  font-size: 12px;
+  color: #657786;
+  text-align: center;
+}
+
+.reach-metrics__bar {
+  height: 40px;
+  background: #f7f9fa;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.reach-metrics__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1DA1F2, #17BF63);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+  transition: width 1s ease;
+}
+
+.reach-metrics__bar-label {
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.reach-metrics__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reach-metrics__breakdown-item {
+  display: grid;
+  grid-template-columns: 100px 1fr 60px;
+  align-items: center;
+  gap: 12px;
+}
+
+.reach-metrics__breakdown-label {
+  font-size: 14px;
+  color: #657786;
+}
+
+.reach-metrics__breakdown-bar {
+  height: 8px;
+  background: #e1e8ed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.reach-metrics__breakdown-bar-fill {
+  height: 100%;
+  transition: width 0.6s ease;
+}
+
+.reach-metrics__breakdown-bar-fill--followers {
+  background: #1DA1F2;
+}
+
+.reach-metrics__breakdown-bar-fill--non-followers {
+  background: #17BF63;
+}
+
+.reach-metrics__breakdown-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #14171a;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .reach-metrics__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .reach-metrics__breakdown-item {
+    grid-template-columns: 80px 1fr 50px;
+  }
+}
