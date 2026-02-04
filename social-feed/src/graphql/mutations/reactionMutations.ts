@@ -16,6 +16,27 @@ export const ADD_REACTION = gql`
   }
 `;
 
+export const LIKE_POST = gql`
+  mutation LikePost($postId: ID!) {
+    likePost(postId: $postId) {
+      id
+      likes
+      isLiked
+    }
+  }
+`;
+
+export const UNLIKE_POST = gql`
+  mutation UnlikePost($postId: ID!) {
+    unlikePost(postId: $postId) {
+      id
+      likes
+      isLiked
+    }
+  }
+`;
+
+
 export const REMOVE_REACTION = gql`
   mutation RemoveReaction($postId: ID!) {
     removeReaction(postId: $postId) {

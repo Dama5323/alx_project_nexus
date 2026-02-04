@@ -1,15 +1,35 @@
+// src/graphql/queries/feedQueries.ts
 import { gql } from '@apollo/client';
-import { POST_FRAGMENT, COMMENT_FRAGMENT } from '../fragments';
 
 export const GET_FEED = gql`
-  query GetFeed($first: Int!, $after: String, $filter: FeedFilter) {
-    feed(first: $first, after: $after, filter: $filter) {
+  query GetFeed($first: Int!) {
+    feed(first: $first) {
       edges {
-        cursor
         node {
-          ...PostFields
+          id
+          content
+          images
+          likes
+          shares
+          createdAt
+          isLiked
+          isSaved
+          author {
+            id
+            name
+            username
+            avatar
+            verified
+          }
           comments {
-            ...CommentFields
+            id
+            content
+            author {
+              name
+              username
+              avatar
+            }
+            createdAt
           }
         }
       }
@@ -22,23 +42,4 @@ export const GET_FEED = gql`
       totalCount
     }
   }
-  ${POST_FRAGMENT}
-  ${COMMENT_FRAGMENT}
-`;
-
-export const GET_TRENDING_POSTS = gql`
-  query GetTrendingPosts($first: Int!, $timeRange: TimeRange) {
-    trendingPosts(first: $first, timeRange: $timeRange) {
-      edges {
-        node {
-          ...PostFields
-        }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-    }
-  }
-  ${POST_FRAGMENT}
 `;

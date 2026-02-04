@@ -1,13 +1,26 @@
 import { gql } from '@apollo/client';
 import { POST_FRAGMENT } from '../fragments';
 
+
 export const CREATE_POST = gql`
-  mutation CreatePost($input: CreatePostInput!) {
-    createPost(input: $input) {
-      ...PostFields
+  mutation CreatePost($content: String!, $images: [String!]) {
+    createPost(content: $content, images: $images) {
+      id
+      content
+      images
+      likes
+      shares
+      createdAt
+      isLiked
+      isSaved
+      author {
+        id
+        name
+        username
+        avatar
+      }
     }
   }
-  ${POST_FRAGMENT}
 `;
 
 export const UPDATE_POST = gql`

@@ -2,12 +2,19 @@ import { gql } from '@apollo/client';
 import { COMMENT_FRAGMENT } from '../fragments';
 
 export const ADD_COMMENT = gql`
-  mutation AddComment($input: CreateCommentInput!) {
-    addComment(input: $input) {
-      ...CommentFields
+  mutation AddComment($postId: ID!, $content: String!) {
+    addComment(postId: $postId, content: $content) {
+      id
+      content
+      likes
+      createdAt
+      author {
+        name
+        username
+        avatar
+      }
     }
   }
-  ${COMMENT_FRAGMENT}
 `;
 
 export const UPDATE_COMMENT = gql`

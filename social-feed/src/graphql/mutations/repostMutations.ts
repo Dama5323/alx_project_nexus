@@ -1,3 +1,4 @@
+// src/graphql/mutations/repostMutations.ts - COMPLETE
 import { gql } from '@apollo/client';
 import { POST_FRAGMENT } from '../fragments';
 
@@ -5,25 +6,15 @@ export const REPOST = gql`
   mutation Repost($postId: ID!, $comment: String) {
     repost(postId: $postId, comment: $comment) {
       id
-      originalPost {
-        ...PostFields
-      }
-      user {
-        id
-        name
-        username
-        avatar
-      }
-      comment
-      createdAt
+      reposts
+      isReposted
     }
   }
-  ${POST_FRAGMENT}
 `;
 
 export const DELETE_REPOST = gql`
-  mutation DeleteRepost($repostId: ID!) {
-    deleteRepost(repostId: $repostId) {
+  mutation DeleteRepost($postId: ID!) {
+    deleteRepost(postId: $postId) {
       success
       message
     }
@@ -31,13 +22,18 @@ export const DELETE_REPOST = gql`
 `;
 
 export const QUOTE_POST = gql`
-  mutation QuotePost($postId: ID!, $content: String!, $images: [Upload]) {
+  mutation QuotePost($postId: ID!, $content: String!, $images: [String]) {
     quotePost(postId: $postId, content: $content, images: $images) {
-      ...PostFields
-      quotedPost {
-        ...PostFields
+      id
+      content
+      images
+      createdAt
+      author {
+        id
+        name
+        username
+        avatar
       }
     }
   }
-  ${POST_FRAGMENT}
 `;
