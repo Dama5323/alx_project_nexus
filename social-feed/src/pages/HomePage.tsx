@@ -8,6 +8,9 @@ import { REPOST } from '../graphql/mutations/repostMutations';
 import { SHARE_POST } from '../graphql/mutations/shareMutations';
 import { useState, useMemo } from 'react';
 import { PostActions } from '../components/Post/PostActions';
+import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
+import { useAuthContext } from '../context/AuthContext'; 
 
 // Define Post type interface
 interface Post {
@@ -29,6 +32,7 @@ interface Post {
 }
 
 function HomePage() {
+  const { user, logout } = useAuth();
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   
   const { loading, error, data } = useQuery(GET_FEED, {
@@ -85,7 +89,7 @@ function HomePage() {
     }
   };
 
-  // In HomePage.tsx, update the handleRepost function:
+  // Handle repost
   const handleRepost = async (postId: string) => {
     try {
       const result = await repost({ 
@@ -99,22 +103,7 @@ function HomePage() {
       
       // Show success feedback
       if (result.data?.repost) {
-        // You could show a toast notification here
         console.log('Post reposted! New repost count:', result.data.repost.reposts);
-        
-        // Or update the UI directly
-        const updatedPosts = posts.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                reposts: result.data.repost.reposts,
-                isReposted: result.data.repost.isReposted 
-              }
-            : post
-        );
-        
-        // Note: In a real app, you'd use state to update this
-        // Since Apollo refetches the feed, the UI should update automatically
       }
     } catch (error: any) {
       console.error('Repost failed:', {
@@ -123,63 +112,63 @@ function HomePage() {
         networkError: error.networkError
       });
       
-      // Show error feedback to user
       alert(`Failed to repost: ${error.message}`);
     }
   };
-  // Handle share - FIXED
-  const handleShare = async (postId: string) => {
-  try {
-    const result = await sharePost({ 
-      variables: { 
-        postId, 
-        platform: 'web', 
-        message: 'Check out this post!' 
-      } 
-    });
 
-    console.log('Share result:', result);
-    
-    if (result.data?.sharePost?.success) {
-      const shareUrl = result.data.sharePost.shareUrl || 
-                       `${window.location.origin}/post/${postId}`;
+  // Handle share
+  const handleShare = async (postId: string) => {
+    try {
+      const result = await sharePost({ 
+        variables: { 
+          postId, 
+          platform: 'web', 
+          message: 'Check out this post!' 
+        } 
+      });
+
+      console.log('Share result:', result);
       
-      console.log('Share URL:', shareUrl);
-      
-      // Try to use Web Share API
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Check out this post',
-            text: result.data.sharePost.message || 'Check out this post!',
-            url: shareUrl,
-          });
-        } catch (shareError: any) {
-          // User cancelled share - that's okay
-          if (shareError.name !== 'AbortError') {
-            // Fallback: copy to clipboard
-            await navigator.clipboard.writeText(shareUrl);
-            alert('Link copied to clipboard!');
+      if (result.data?.sharePost?.success) {
+        const shareUrl = result.data.sharePost.shareUrl || 
+                         `${window.location.origin}/post/${postId}`;
+        
+        console.log('Share URL:', shareUrl);
+        
+        // Try to use Web Share API
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Check out this post',
+              text: result.data.sharePost.message || 'Check out this post!',
+              url: shareUrl,
+            });
+          } catch (shareError: any) {
+            // User cancelled share - that's okay
+            if (shareError.name !== 'AbortError') {
+              // Fallback: copy to clipboard
+              await navigator.clipboard.writeText(shareUrl);
+              alert('Link copied to clipboard!');
+            }
           }
+        } else {
+          // Fallback for browsers without Web Share API
+          await navigator.clipboard.writeText(shareUrl);
+          alert('Link copied to clipboard!');
         }
       } else {
-        // Fallback for browsers without Web Share API
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard!');
+        alert('Share failed: ' + (result.data?.sharePost?.message || 'Unknown error'));
       }
-    } else {
-      alert('Share failed: ' + (result.data?.sharePost?.message || 'Unknown error'));
+    } catch (error: any) {
+      console.error('Share failed details:', {
+        message: error.message,
+        graphQLErrors: error.graphQLErrors,
+        networkError: error.networkError
+      });
+      
+      alert(`Share failed: ${error.message}`);
     }
-  } catch (error: any) {
-    console.error('Share failed details:', {
-      message: error.message,
-      graphQLErrors: error.graphQLErrors,
-      networkError: error.networkError
-    });
-    
-    alert(`Share failed: ${error.message}`);
-  }
-};
+  };
 
   // Handle save
   const handleSave = async (postId: string) => {
@@ -194,6 +183,50 @@ function HomePage() {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+      {/* Add auth status bar */}
+      <div style={{
+        position: 'fixed',
+        top: 10,
+        right: 10,
+        background: 'white',
+        padding: '10px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        zIndex: 1000
+      }}>
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>Hello, {user.name || user.email}</span>
+            <button 
+              onClick={logout}
+              style={{
+                padding: '5px 10px',
+                background: '#ff4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link 
+            to="/auth"
+            style={{
+              padding: '5px 10px',
+              background: '#1d9bf0',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px'
+            }}
+          >
+            Login
+          </Link>
+        )}
+      </div>
+      
       {/* Create Post Section */}
       <div style={{padding: '20px', borderBottom: '1px solid #eee'}}>
         <textarea 

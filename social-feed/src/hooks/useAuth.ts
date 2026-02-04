@@ -1,12 +1,18 @@
-// src/hooks/useAuth.ts
-import { useState, useCallback, useEffect } from 'react';
-import { User } from '../types'; 
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+}
 
 interface AuthResult {
   success: boolean;
   error?: string;
   user?: User;
+  message?: string; // Add this line to fix the interface
 }
 
 export const useAuth = () => {
@@ -14,105 +20,172 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isAuthenticated = !!user;
+
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (err) {
-        localStorage.removeItem('user');
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
+        });
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    });
+
+    // Listen for changes on auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0]
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    setLoading(true);
+  const signup = async (name: string, email: string, password: string): Promise<AuthResult> => {
+    setError(null); // Clear previous errors
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      return { 
+        success: true, 
+        user: {
+          id: data.user?.id || '',
+          email: data.user?.email || '',
+          name
+        }
+      };
+    } catch (error: any) {
+      setError(error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<AuthResult> => {
+    setError(null); // Clear previous errors
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+      
+      return { 
+        success: true, 
+        user: {
+          id: data.user.id,
+          email: data.user.email!,
+          name: data.user.user_metadata?.name || data.user.email?.split('@')[0]
+        }
+      };
+    } catch (error: any) {
+      setError(error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const logout = async () => {
+    setError(null);
+    await supabase.auth.signOut();
+  };
+
+  const loginWithGoogle = async (): Promise<AuthResult> => {
     setError(null);
     try {
-      console.log('Login attempt:', email);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Starting Google OAuth flow...');
       
-      if (!email || !password) {
-        throw new Error('Email and password are required');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
+        }
+      });
+
+      console.log('Google OAuth response:', { data, error });
+      
+      if (error) {
+        console.error('Google OAuth error:', error);
+        throw error;
       }
       
-      const mockUser: User = {
-        id: '1',
-        name: 'Demo User',
-        email,
-        username: email.split('@')[0],
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        createdAt: new Date().toISOString(),
-        verified: true,
-        bio: 'Just a demo user'
+      // The OAuth flow will redirect the user, so we don't set user here
+      return { 
+        success: true, 
+        message: 'Redirecting to Google...' 
       };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return { success: true, user: mockUser };
-    } catch (err: any) {
-      const errorMessage = err.message || 'Login failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      console.error('Google login failed:', error);
+      setError(error.message);
+      return { success: false, error: error.message };
     }
-  }, []);
+  };
 
-  const signup = useCallback(async (name: string, email: string, password: string): Promise<AuthResult> => {
-    setLoading(true);
+  const loginWithLinkedIn = async (): Promise<AuthResult> => {
     setError(null);
     try {
-      console.log('Signup attempt:', { name, email });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Starting LinkedIn OAuth flow...');
       
-      if (!name || !email || !password) {
-        throw new Error('All fields are required');
-      }
-      
-      if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
-      }
-      
-      const mockUser: User = {
-        id: Date.now().toString(),
-        name,
-        email,
-        username: email.split('@')[0],
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
-        createdAt: new Date().toISOString(),
-        verified: false,
-        bio: 'New user'
-      };
-      
-      console.log('Signup successful:', mockUser);
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return { success: true, user: mockUser };
-    } catch (err: any) {
-      const errorMessage = err.message || 'Signup failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'openid profile email'
+        }
+      });
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('user');
-  }, []);
+      console.log('LinkedIn OAuth response:', { data, error });
+      
+      if (error) {
+        console.error('LinkedIn OAuth error:', error);
+        throw error;
+      }
+      
+      return { 
+        success: true, 
+        message: 'Redirecting to LinkedIn...' 
+      };
+    } catch (error: any) {
+      console.error('LinkedIn login failed:', error);
+      setError(error.message);
+      return { success: false, error: error.message };
+    }
+  };
 
   return {
     user,
     loading,
-    error,
-    login,
+    error, 
     signup,
+    login,
     logout,
-    isAuthenticated: !!user,
+    loginWithGoogle,
+    loginWithLinkedIn,
+    isAuthenticated
   };
 };
-
-export default useAuth;

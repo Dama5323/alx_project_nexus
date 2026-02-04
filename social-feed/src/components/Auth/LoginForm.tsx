@@ -3,14 +3,22 @@ import { Button } from '../common/Button';
 import { useAuth } from '../../hooks/useAuth';
 import './AuthForms.css';
 
-
 export const LoginForm: React.FC<{ onSwitchToSignup: () => void }> = ({ onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loading, error } = useAuth();
+  const [formError, setFormError] = useState(''); // Local form error state
+  const { login, loading, error: authError } = useAuth(); // Destructure error
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+    
+    // Basic validation
+    if (!email || !password) {
+      setFormError('Please fill in all fields');
+      return;
+    }
+    
     console.log('Login attempt...');
     const result = await login(email, password);
     
@@ -19,6 +27,7 @@ export const LoginForm: React.FC<{ onSwitchToSignup: () => void }> = ({ onSwitch
       // You can add redirect logic here
     } else {
       console.log('Login failed:', result.error);
+      setFormError(result.error || 'Login failed');
     }
   };
 
@@ -26,9 +35,9 @@ export const LoginForm: React.FC<{ onSwitchToSignup: () => void }> = ({ onSwitch
     <div className="auth-form">
       <h2>Login</h2>
       
-      {error && (
+      {(authError || formError) && (
         <div className="auth-error">
-          {error}
+          {authError || formError}
         </div>
       )}
       

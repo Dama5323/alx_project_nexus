@@ -1,3 +1,4 @@
+// src/components/auth/SignupForm.tsx - UPDATED
 import React, { useState } from 'react';
 import { Button } from '../common/Button';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,7 +10,7 @@ export const SignupForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitch
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [validationError, setValidationError] = useState('');
-  const { signup, loading, error } = useAuth();
+  const { signup, loading, error: authError } = useAuth(); // Destructure error
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +52,7 @@ export const SignupForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitch
       onSwitchToLogin(); // Switch to login form
     } else {
       console.log('Signup failed:', result.error);
+      setValidationError(result.error || 'Signup failed');
     }
   };
 
@@ -58,9 +60,9 @@ export const SignupForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitch
     <div className="auth-form">
       <h2>Create Account</h2>
       
-      {(error || validationError) && (
+      {(authError || validationError) && (
         <div className="auth-error">
-          {error || validationError}
+          {authError || validationError}
         </div>
       )}
       
