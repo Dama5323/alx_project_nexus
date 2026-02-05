@@ -1,4 +1,3 @@
-// src/pages/HomePage.tsx - CORRECTED
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_FEED } from '../graphql/queries/feedQueries';
 import { CREATE_POST } from '../graphql/mutations/postMutations';
@@ -11,6 +10,8 @@ import { PostActions } from '../components/Post/PostActions';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { useAuthContext } from '../context/AuthContext'; 
+import { ProfileNav } from '../components/Profile/ProfileNav';
+import { useNavigate } from 'react-router-dom';
 
 // Define Post type interface
 interface Post {
@@ -31,8 +32,52 @@ interface Post {
   images?: string[];
 }
 
+// Update the ProfileNav component usage or create it if it doesn't exist
+// If ProfileNav doesn't exist yet, you can create it like this:
+
+// In components/Profile/ProfileNav.tsx:
+// import { Link } from 'react-router-dom';
+// import { useAuth } from '../../hooks/useAuth';
+//
+// export function ProfileNav() {
+//   const { user } = useAuth();
+//   
+//   return (
+//     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+//       <Link 
+//         to="/profile/edit"
+//         style={{
+//           padding: '6px 12px',
+//           background: '#f0f0f0',
+//           color: '#333',
+//           textDecoration: 'none',
+//           borderRadius: '4px',
+//           fontSize: '14px'
+//         }}
+//       >
+//         Edit Profile
+//       </Link>
+//       {user && (
+//         <Link to={`/profile/${user.id}`}>
+//           <img 
+//             src={user.avatar || 'https://via.placeholder.com/40'} 
+//             alt="Profile"
+//             style={{
+//               width: '40px',
+//               height: '40px',
+//               borderRadius: '50%',
+//               objectFit: 'cover'
+//             }}
+//           />
+//         </Link>
+//       )}
+//     </div>
+//   );
+// }
+
 function HomePage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   
   const { loading, error, data } = useQuery(GET_FEED, {
@@ -175,6 +220,11 @@ function HomePage() {
     console.log('Save post:', postId);
   };
 
+  // Handle profile edit navigation
+  const handleEditProfile = () => {
+    navigate('/profile/edit');
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) {
     console.error('GraphQL Error:', error);
@@ -183,20 +233,58 @@ function HomePage() {
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      {/* Add auth status bar */}
+      {/* Top Bar with User Info */}
       <div style={{
         position: 'fixed',
         top: 10,
         right: 10,
         background: 'white',
-        padding: '10px',
+        padding: '10px 15px',
         borderRadius: '8px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 1000
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px'
       }}>
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>Hello, {user.name || user.email}</span>
+          <>
+            {/* Profile Navigation */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button 
+                onClick={handleEditProfile}
+                style={{
+                  padding: '6px 12px',
+                  background: '#f0f0f0',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textDecoration: 'none'
+                }}
+              >
+                Edit Profile
+              </button>
+              
+              <Link to={`/profile/${user.id}`}>
+                <img 
+                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=1d9bf0&color=fff`} 
+                  alt="Profile"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              </Link>
+            </div>
+            
+            <span style={{ color: '#536471' }}>
+              Hello, {user.name || user.email}
+            </span>
+            
             <button 
               onClick={logout}
               style={{
@@ -205,12 +293,13 @@ function HomePage() {
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontSize: '14px'
               }}
             >
               Logout
             </button>
-          </div>
+          </>
         ) : (
           <Link 
             to="/auth"
@@ -226,9 +315,11 @@ function HomePage() {
           </Link>
         )}
       </div>
+                
+      
       
       {/* Create Post Section */}
-      <div style={{padding: '20px', borderBottom: '1px solid #eee'}}>
+      <div style={{padding: '20px', borderBottom: '1px solid #eee', marginTop: '80px'}}>
         <textarea 
           id="post-content" 
           placeholder="What's happening?" 

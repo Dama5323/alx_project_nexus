@@ -1,13 +1,22 @@
 import { gql } from '@apollo/client';
 import { USER_FRAGMENT } from '../fragments';
 
+
 export const UPDATE_PROFILE = gql`
   mutation UpdateProfile($input: UpdateProfileInput!) {
     updateProfile(input: $input) {
-      ...UserFields
+      id
+      name
+      email
+      username
+      avatar
+      bio
+      followers
+      following
+      verified
+      createdAt
     }
   }
-  ${USER_FRAGMENT}
 `;
 
 export const FOLLOW_USER = gql`

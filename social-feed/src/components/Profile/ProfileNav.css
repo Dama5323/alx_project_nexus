@@ -1,0 +1,50 @@
+/* ProfileNav styles */
+.profile-nav {
+  display: inline-block;
+}
+
+.profile-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.profile-nav__link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.profile-nav__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile-nav__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-nav__avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.profile-nav__text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f1419;
+}

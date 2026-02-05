@@ -1,58 +1,149 @@
+// src/graphql/queries/userQueries.ts - UPDATED
 import { gql } from '@apollo/client';
-import { USER_FRAGMENT, POST_FRAGMENT } from '../fragments';
-
-export const GET_CURRENT_USER = gql`
-  query GetCurrentUser {
-    me {
-      ...UserFields
-    }
-  }
-  ${USER_FRAGMENT}
-`;
 
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($username: String!) {
     user(username: $username) {
-      ...UserFields
+      id
+      name
+      username
+      email
+      avatar
+      bio
+      website
+      location
+      followers
+      following
       postsCount
+      verified
+      createdAt
       isFollowing
-      isFollowedBy
+      isBlocked
     }
   }
-  ${USER_FRAGMENT}
 `;
 
-export const SEARCH_USERS = gql`
-  query SearchUsers($query: String!, $first: Int!) {
-    searchUsers(query: $query, first: $first) {
-      edges {
-        node {
-          ...UserFields
-        }
-      }
-    }
-  }
-  ${USER_FRAGMENT}
-`;
-
-// 🆕 ADD THIS QUERY
 export const GET_USER_POSTS = gql`
   query GetUserPosts($userId: ID!, $first: Int!, $after: String) {
     userPosts(userId: $userId, first: $first, after: $after) {
       edges {
-        cursor
         node {
-          ...PostFields
+          id
+          content
+          images
+          video
+          likes
+          comments {
+            id
+            content
+            author {
+              id
+              name
+              username
+              avatar
+            }
+            likes
+            createdAt
+          }
+          shares
+          reposts
+          views
+          createdAt
+          isLiked
+          isReposted
+          isSaved
+          author {
+            id
+            name
+            username
+            avatar
+            verified
+          }
         }
       }
       pageInfo {
         hasNextPage
-        hasPreviousPage
-        startCursor
         endCursor
       }
       totalCount
     }
   }
-  ${POST_FRAGMENT}
+`;
+
+export const GET_FOLLOW_STATUS = gql`
+  query GetFollowStatus($userId: ID!) {
+    followStatus(userId: $userId) {
+      isFollowing
+      isFollowedBy
+    }
+  }
+`;
+
+export const GET_USER_FOLLOWERS = gql`
+  query GetUserFollowers($username: String!) {
+    user(username: $username) {
+      id
+      username
+      followersList {
+        id
+        name
+        username
+        avatar
+        bio
+        isFollowing
+      }
+    }
+  }
+`;
+
+export const GET_USER_FOLLOWING = gql`
+  query GetUserFollowing($username: String!) {
+    user(username: $username) {
+      id
+      username
+      followingList {
+        id
+        name
+        username
+        avatar
+        bio
+        isFollowing
+      }
+    }
+  }
+`;
+
+export const UPDATE_USER_PROFILE = gql`
+  mutation UpdateUserProfile($input: UpdateProfileInput!) {
+    updateProfile(input: $input) {
+      id
+      name
+      username
+      email
+      avatar
+      bio
+      website
+      location
+    }
+  }
+`;
+
+export const FOLLOW_USER = gql`
+  mutation FollowUser($userId: ID!) {
+    followUser(userId: $userId) {
+      id
+      followers
+      isFollowing
+    }
+  }
+`;
+
+export const UNFOLLOW_USER = gql`
+  mutation UnfollowUser($userId: ID!) {
+    unfollowUser(userId: $userId) {
+      id
+      followers
+      isFollowing
+    }
+  }
 `;

@@ -177,6 +177,10 @@ export const useAuth = () => {
     }
   };
 
+  const updateUserProfile = (updatedUserData: Partial<User>) => {
+  setUser(prev => prev ? { ...prev, ...updatedUserData } : null);
+};
+
   return {
     user,
     loading,
@@ -186,6 +190,7 @@ export const useAuth = () => {
     logout,
     loginWithGoogle,
     loginWithLinkedIn,
-    isAuthenticated
+    isAuthenticated,
+    updateUserProfile
   };
 };

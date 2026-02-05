@@ -2,15 +2,17 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext'; // IMPORT THIS
+import { AuthProvider } from './context/AuthContext'; 
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AuthPage } from './components/Auth';
 import HomePage from './pages/HomePage'; 
 import { ProfilePage } from './pages/ProfilePage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { useAuthContext } from './context/AuthContext'; // CHANGE THIS
+import { useAuthContext } from './context/AuthContext'; 
 import './App.css';
 import Callback from './pages/AuthCallback';
+import EditProfilePage from './pages/EditProfilePage'; 
+
 
 // Protected Route component - UPDATE TO USE useAuthContext
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -75,6 +77,8 @@ function App() {
                 {/* Fallback routes */}
                 <Route path="/404" element={<NotFoundPage />} />
                 <Route path="*" element={<Navigate to="/auth" replace />} />
+                <Route path="/profile/:userId" element={<ProfilePage />} />
+                <Route path="/profile/edit" element={<EditProfilePage />} />
               </Routes>
             </div>
           </Router>
