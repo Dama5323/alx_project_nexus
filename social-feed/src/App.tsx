@@ -12,7 +12,10 @@ import { useAuthContext } from './context/AuthContext';
 import './App.css';
 import Callback from './pages/AuthCallback';
 import EditProfilePage from './pages/EditProfilePage'; 
-
+import NotificationsPage from './pages/NotificationsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import BookmarksPage from './pages/BookmarksPage';
+import TrendingPage from './pages/TrendingPage';
 
 // Protected Route component - UPDATE TO USE useAuthContext
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -79,6 +82,10 @@ function App() {
                 <Route path="*" element={<Navigate to="/auth" replace />} />
                 <Route path="/profile/:userId" element={<ProfilePage />} />
                 <Route path="/profile/edit" element={<EditProfilePage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/bookmarks" element={<BookmarksPage />} />
+                <Route path="/trending" element={<TrendingPage />} />
               </Routes>
             </div>
           </Router>

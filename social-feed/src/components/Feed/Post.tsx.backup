@@ -64,16 +64,16 @@ export const Post: React.FC<PostProps> = ({ post, onComment, onRepost, onShare }
 
       <PostStats
         likes={post.likes}
-        comments={post.comments}
+        comments={post.comments} 
         reposts={post.reposts || 0}
         views={post.views}
-      />
+            />
 
       <PostActions
         postId={post.id}
         likes={post.likes}
-        comments={post.comments}
-        reposts={post.reposts || 0}
+        comments={post.comments} 
+        reposts={post.reposts || 0} 
         shares={post.shares || 0}
         isLiked={post.isLiked}
         isReposted={post.isReposted || false}

@@ -31,7 +31,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
               d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
             />
           </svg>
-          <span className="post-analytics__views">{formatNumber(analytics.views)} views</span>
+          <span className="post-analytics__views">{formatNumber(analytics.views || 0)} views</span>
         </button>
 
         <button
@@ -59,7 +59,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">👁️</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {formatNumber(analytics.views)}
+                    {formatNumber(analytics.views || 0)}
                   </span>
                   <span className="post-analytics__metric-label">Total Views</span>
                 </div>
@@ -69,7 +69,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">👤</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {formatNumber(analytics.uniqueViews)}
+                    {formatNumber(analytics.uniqueViews || 0)}
                   </span>
                   <span className="post-analytics__metric-label">Unique Views</span>
                 </div>
@@ -79,7 +79,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">📊</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {formatNumber(analytics.impressions)}
+                    {formatNumber(analytics.impressions || 0)}
                   </span>
                   <span className="post-analytics__metric-label">Impressions</span>
                 </div>
@@ -89,7 +89,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">💬</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {analytics.engagementRate.toFixed(2)}%
+                    {(analytics.engagementRate || 0).toFixed(2)}%
                   </span>
                   <span className="post-analytics__metric-label">Engagement Rate</span>
                 </div>
@@ -99,7 +99,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">🎯</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {analytics.reachPercentage.toFixed(2)}%
+                    {(analytics.reachPercentage || 0).toFixed(2)}%
                   </span>
                   <span className="post-analytics__metric-label">Reach</span>
                 </div>
@@ -109,7 +109,7 @@ export const PostAnalytics: React.FC<PostAnalyticsProps> = ({ postId, isOwner })
                 <div className="post-analytics__metric-icon">🔗</div>
                 <div className="post-analytics__metric-info">
                   <span className="post-analytics__metric-value">
-                    {analytics.clickThroughRate.toFixed(2)}%
+                    {(analytics.clickThroughRate || 0).toFixed(2)}%
                   </span>
                   <span className="post-analytics__metric-label">Click Rate</span>
                 </div>

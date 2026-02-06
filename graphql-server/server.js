@@ -498,6 +498,21 @@ const resolvers = {
       }
       throw new Error('Comment not found');
     },
+     savePost: (_, { postId }) => {
+      const post = mockPosts.find(p => p.id === postId);
+      if (!post) throw new Error('Post not found');
+      
+      post.isSaved = true;
+      return post;
+    },
+    
+    unsavePost: (_, { postId }) => {
+      const post = mockPosts.find(p => p.id === postId);
+      if (!post) throw new Error('Post not found');
+      
+      post.isSaved = false;
+      return post;
+    },
 
     repost: (_, { postId }) => {
       const post = mockPosts.find(p => p.id === postId);

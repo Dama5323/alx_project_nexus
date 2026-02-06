@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePostAnalytics } from '../../hooks/usePostAnalytics';
-import { formatNumber, formatPercentage } from '../../utils/helpers/formatNumbers';
+import { formatNumber } from '../../utils/helpers/formatNumbers';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { EngagementChart } from './EngagementChart';
 import './PostInsights.css';
@@ -28,40 +28,41 @@ export const PostInsights: React.FC<PostInsightsProps> = ({ postId }) => {
     );
   }
 
+  // Use optional chaining and provide fallbacks
   const metrics = [
     {
       label: 'Total Views',
-      value: formatNumber(analytics.views),
+      value: formatNumber(analytics.views || 0),
       icon: '👁️',
       color: '#1DA1F2',
     },
     {
       label: 'Unique Viewers',
-      value: formatNumber(analytics.uniqueViews),
+      value: formatNumber(analytics.uniqueViews || 0),
       icon: '👤',
       color: '#17BF63',
     },
     {
       label: 'Impressions',
-      value: formatNumber(analytics.impressions),
+      value: formatNumber(analytics.impressions || 0),
       icon: '📊',
       color: '#794BC4',
     },
     {
       label: 'Engagement Rate',
-      value: `${analytics.engagementRate.toFixed(2)}%`,
+      value: `${(analytics.engagementRate || 0).toFixed(2)}%`,
       icon: '💬',
       color: '#F91880',
     },
     {
       label: 'Click Through Rate',
-      value: `${analytics.clickThroughRate.toFixed(2)}%`,
+      value: `${(analytics.clickThroughRate || 0).toFixed(2)}%`,
       icon: '🔗',
       color: '#FFAD1F',
     },
     {
       label: 'Reach',
-      value: `${analytics.reachPercentage.toFixed(2)}%`,
+      value: `${(analytics.reachPercentage || 0).toFixed(2)}%`,
       icon: '🎯',
       color: '#E0245E',
     },

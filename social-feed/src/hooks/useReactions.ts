@@ -1,5 +1,6 @@
 //import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
+import { useAuth } from './useAuth';
 import { ADD_REACTION, REMOVE_REACTION, UPDATE_REACTION } from '../graphql/mutations/reactionMutations';
 import { GET_POST_REACTIONS } from '../graphql/queries/reactionQueries';
 import { ReactionType, ReactionSummary, Reaction } from '../types';
@@ -15,6 +16,7 @@ interface UseReactionsResult {
 }
 
 export const useReactions = (postId: string): UseReactionsResult => {
+  const { user } = useAuth();
   const { data, loading } = useQuery(GET_POST_REACTIONS, {
     variables: { postId },
   });
@@ -24,7 +26,7 @@ export const useReactions = (postId: string): UseReactionsResult => {
   const [updateReactionMutation] = useMutation(UPDATE_REACTION);
 
   const reactions = data?.postReactions || [];
-  const userReaction = reactions.find((r: ReactionSummary) => r.isUserReacted);
+  const userReaction = reactions.find((r: ReactionSummary) => r.isUserReacted || r.users?.some(u => u.id === user?.id));
   const totalCount = reactions.reduce((sum: number, r: ReactionSummary) => sum + r.count, 0);
 
   const addReaction = async (type: ReactionType) => {

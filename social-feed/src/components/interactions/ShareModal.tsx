@@ -24,7 +24,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({ postId, onClose }) => {
   };
 
   const handleShare = async (platform: string) => {
-    await sharePost(postId, { platform: platform as any, message });
+    await sharePost(postId, { 
+    platform: platform as any, 
+    message,
+    text: message 
+});
     onClose();
   };
 

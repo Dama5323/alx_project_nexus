@@ -3,7 +3,7 @@ import { ReactionType } from '../../types';
 export const REACTIONS = [
   { type: ReactionType.LIKE, emoji: '👍', label: 'Like' },
   { type: ReactionType.LOVE, emoji: '❤️', label: 'Love' },
-  { type: ReactionType.LAUGH, emoji: '😂', label: 'Haha' },
+  { type: ReactionType.HAHA, emoji: '😂', label: 'Haha' }, 
   { type: ReactionType.WOW, emoji: '😮', label: 'Wow' },
   { type: ReactionType.SAD, emoji: '😢', label: 'Sad' },
   { type: ReactionType.ANGRY, emoji: '😠', label: 'Angry' },
