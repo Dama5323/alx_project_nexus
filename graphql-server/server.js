@@ -1105,6 +1105,24 @@ async function startServer() {
 
   // ===== 10. ADDITIONAL UTILITY ENDPOINTS =====
   // Health check endpoint
+
+  
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'Social Feed GraphQL API',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        graphql: '/graphql',
+        health: '/api/health',
+        upload: '/api/upload',
+        currentUser: '/api/current-user',
+        avatarUpload: '/api/avatar/upload'
+      },
+      documentation: 'Visit /graphql for GraphQL playground'
+    });
+});
+
   app.get('/api/health', (req, res) => {
     res.json({ 
       status: 'healthy',
