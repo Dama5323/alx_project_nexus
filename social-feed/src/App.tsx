@@ -19,9 +19,10 @@ import HashtagPage from './pages/HashtagPage';
 import MessagesPage from './pages/MessagesPage';
 import SearchPage from './pages/SearchPage';
 import Sidebar from './components/Sidebar/Sidebar';
-import MobileMenu from './components/Sidebar/MobileMenu'; // ADD THIS IMPORT
+import MobileMenu from './components/Sidebar/MobileMenu'; 
 import { ApolloProvider } from '@apollo/client';
 import { client } from './apollo/client';
+import ComposePage from './pages/ComposePage';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -66,13 +67,30 @@ function App() {
                 {/* Mobile Menu */}
                 <MobileMenu />
                 
-                {/* Desktop Sidebar */}
+                {/* Desktop Sidebar with toggle button */}
                 <div className="hidden md:block">
-                  <Sidebar />
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <button 
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      style={{
+                        padding: '8px',
+                        background: '#f0f2f5',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        marginRight: '10px'
+                      }}
+                    >
+                      {sidebarOpen ? '◀ Hide' : '▶ Show'} Sidebar
+                    </button>
+                    <Sidebar />
+                  </div>
                 </div>
                 
-                {/* Main Content */}
-                <main className="flex-1 md:ml-64 lg:ml-80 overflow-y-auto">
+                {/* Adjust main content based on sidebar state */}
+                <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
+                  sidebarOpen ? 'md:ml-64 lg:ml-80' : 'md:ml-0'
+                }`}>
                   <div className="max-w-4xl mx-auto p-4">
                     <Routes>
                       {/* Public routes */}
@@ -108,7 +126,13 @@ function App() {
                           <EditProfilePage />
                         </ProtectedRoute>
                       } />
-                      
+
+                      <Route path="/compose" element={
+                        <ProtectedRoute>
+                          <ComposePage />
+                        </ProtectedRoute>
+                      } />
+                                            
                       {/* Other protected routes */}
                       <Route path="/notifications" element={
                         <ProtectedRoute>
@@ -168,16 +192,6 @@ function App() {
                             <div className="help-content">
                               <h1>Help & Support</h1>
                               <p>Help page coming soon!</p>
-                            </div>
-                          </div>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/compose" element={
-                        <ProtectedRoute>
-                          <div className="compose-container">
-                            <div className="compose-content">
-                              <h1>Create Post</h1>
-                              <p>Compose page coming soon! Use the create post in HomePage for now.</p>
                             </div>
                           </div>
                         </ProtectedRoute>

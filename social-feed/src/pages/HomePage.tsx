@@ -48,7 +48,7 @@ function HomePage() {
   const [newPostContent, setNewPostContent] = useState('');
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   
@@ -256,15 +256,16 @@ function HomePage() {
     console.log('Save post:', postId);
   };
 
-  // Handle profile edit navigation
+  // Handle profile edit navigation - ADDED: Using this function
   const handleEditProfile = () => {
+    console.log('Edit profile clicked');
     navigate('/profile/edit');
   };
 
-  // Handle image upload
+  // Handle image upload - FIXED: null check for files - ADDED: Using this function
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     const uploadedImages: string[] = [];
@@ -299,9 +300,12 @@ function HomePage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Handle video upload
+  // Handle video upload - FIXED: null check for files - ADDED: Using this function
   const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
@@ -331,7 +335,7 @@ function HomePage() {
     }
   };
 
-  // Handle create post via GraphQL
+  // Handle create post via GraphQL - ADDED: Using this function
   const handleCreatePost = async () => {
     if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
       alert('Please add content, images, or video');
@@ -488,13 +492,36 @@ function HomePage() {
                 Analytics
               </Link>
             </div>
+            
+            {/* ADDED: Edit Profile Button */}
+            <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
+              <button 
+                onClick={handleEditProfile}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: '#f0f2f5',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+              >
+                <span>✏️</span>
+                Edit Profile
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* Main Content */}
       <div style={{ flex: 1, maxWidth: '600px' }}>
-        {/* Top Bar */}
+        {/* Top Bar - ADDED: Uploading indicator */}
         <div style={{
           position: 'fixed',
           top: 0,
@@ -511,6 +538,23 @@ function HomePage() {
           <h1 style={{ margin: 0, fontSize: '20px' }}>Home</h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {/* ADDED: Uploading indicator */}
+            {uploading && (
+              <div style={{
+                padding: '4px 12px',
+                background: '#e3f2fd',
+                color: '#1976d2',
+                borderRadius: '20px',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                <span>⏳</span>
+                Uploading...
+              </div>
+            )}
+            
             <NotificationBell />
             
             {user && (
@@ -537,6 +581,175 @@ function HomePage() {
         {/* Also show CreatePost component for local posts */}
         <div style={{ marginBottom: '20px' }}>
           <CreatePost onPostCreated={handlePostCreated} />
+          
+          {/* ADDED: Simple post creation form using handleCreatePost */}
+          <div style={{
+            background: 'white',
+            padding: '15px',
+            borderRadius: '12px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            marginBottom: '20px'
+          }}>
+            <textarea
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              placeholder="What's happening?"
+              style={{
+                width: '100%',
+                minHeight: '60px',
+                padding: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                resize: 'vertical',
+                marginBottom: '10px'
+              }}
+            />
+            
+            {/* ADDED: Image upload button using handleImageUpload */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  padding: '8px 12px',
+                  background: '#f0f2f5',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                📷 Add Image
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              
+              {/* ADDED: Video upload button using handleVideoUpload */}
+              <button 
+                onClick={() => videoInputRef.current?.click()}
+                style={{
+                  padding: '8px 12px',
+                  background: '#f0f2f5',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                🎥 Add Video
+              </button>
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                onChange={handleVideoUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
+            
+            {/* Show selected images */}
+            {selectedImages.length > 0 && (
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                {selectedImages.map((img, index) => (
+                  <div key={index} style={{ position: 'relative' }}>
+                    <img 
+                      src={img} 
+                      alt="Selected" 
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <button
+                      onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        background: '#ff4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '20px',
+                        height: '20px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Show selected video */}
+            {selectedVideo && (
+              <div style={{ marginBottom: '10px', position: 'relative' }}>
+                <video
+                  src={selectedVideo}
+                  controls
+                  style={{
+                    width: '100%',
+                    maxHeight: '200px',
+                    borderRadius: '8px'
+                  }}
+                />
+                <button
+                  onClick={() => setSelectedVideo(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    background: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '25px',
+                    height: '25px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            
+            {/* ADDED: Create post button using handleCreatePost */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={handleCreatePost}
+                disabled={uploading || (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo)}
+                style={{
+                  padding: '8px 20px',
+                  background: '#1d9bf0',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: uploading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: uploading ? 0.6 : 1
+                }}
+              >
+                {uploading ? 'Posting...' : 'Post'}
+              </button>
+            </div>
+          </div>
           
           {/* Show local posts if GraphQL posts are empty */}
           {posts.length === 0 && !loadingLocalPosts && localPosts.length === 0 && (

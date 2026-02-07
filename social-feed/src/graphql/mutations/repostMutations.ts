@@ -1,39 +1,50 @@
-// src/graphql/mutations/repostMutations.ts - COMPLETE
 import { gql } from '@apollo/client';
-import { POST_FRAGMENT } from '../fragments';
+import { POST_FRAGMENT } from '../../graphql/fragments'; 
 
-export const REPOST = gql`
-  mutation Repost($postId: ID!, $comment: String) {
-    repost(postId: $postId, comment: $comment) {
-      id
-      reposts
-      isReposted
+export const REPOST_POST = gql`
+  mutation RepostPost($postId: ID!) {
+    repostPost(postId: $postId) {
+      success
+      message
+      repost {
+        id
+        post {
+          ...PostFields  # Using POST_FRAGMENT here
+        }
+        user {
+          id
+          username
+          avatar
+        }
+        createdAt
+      }
     }
   }
+  ${POST_FRAGMENT}  # This is where you use the imported fragment
 `;
 
-export const DELETE_REPOST = gql`
-  mutation DeleteRepost($postId: ID!) {
-    deleteRepost(postId: $postId) {
+export const REPOST = REPOST_POST;
+
+export const UNDO_REPOST = gql`
+  mutation UndoRepost($postId: ID!) {
+    undoRepost(postId: $postId) {
       success
       message
     }
   }
 `;
 
-export const QUOTE_POST = gql`
-  mutation QuotePost($postId: ID!, $content: String!, $images: [String]) {
-    quotePost(postId: $postId, content: $content, images: $images) {
+export const GET_REPOSTS = gql`
+  query GetReposts($postId: ID!) {
+    reposts(postId: $postId) {
       id
-      content
-      images
-      createdAt
-      author {
+      user {
         id
-        name
         username
         avatar
+        name
       }
+      createdAt
     }
   }
 `;

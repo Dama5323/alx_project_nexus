@@ -39,18 +39,26 @@ interface EditFormData {
 
 const ProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
-  const { user: currentUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const auth = useAuth(); // Destructure properly
+  
+  // Destructure auth properties - adjust based on your actual useAuth return
+  const currentUser = auth.user;
+  const isAuthenticated = auth.isAuthenticated || !!auth.user;
+  
   const [activeTab, setActiveTab] = useState<'posts' | 'likes' | 'media'>('posts');
   const [isEditing, setIsEditing] = useState(false);
   const [localProfile, setLocalProfile] = useState<Profile | null>(null);
   
-  // Debug authentication
+  // Debug authentication - FIXED: removed duplicate closing brace
   useEffect(() => {
-    console.log('DEBUG: Current user:', currentUser);
-    console.log('DEBUG: Is authenticated:', isAuthenticated);
-    console.log('DEBUG: Token:', localStorage.getItem('token') || localStorage.getItem('authToken'));
-  }, []);
+    if (isAuthenticated && currentUser) {
+      console.log('DEBUG: Current user:', currentUser);
+      console.log('DEBUG: Is authenticated:', isAuthenticated);
+      console.log('DEBUG: Token:', localStorage.getItem('token') || localStorage.getItem('authToken'));
+      console.log('Fetching profile for:', currentUser.id);
+    }
+  }, [currentUser, isAuthenticated]); // ✅ Fixed: Added dependencies
 
   // Use UPDATE_PROFILE mutation with error handling
   const [updateProfile, { loading: updating, error: updateError }] = useMutation(UPDATE_PROFILE, {
@@ -165,16 +173,6 @@ const ProfilePage: React.FC = () => {
       };
 
       console.log('📤 Sending input:', inputData);
-      console.log('🔗 Mutation name: updateProfile');
-      console.log('📝 Full GraphQL operation:', {
-        query: `mutation UpdateProfile($input: UpdateProfileInput!) {
-          updateProfile(input: $input) {
-            id name username email bio location website avatar followers following verified createdAt
-          }
-        }`,
-        variables: { input: inputData },
-        operationName: 'UpdateProfile'
-      });
       
       // Try the GraphQL mutation with explicit headers
       const { data } = await updateProfile({
@@ -191,7 +189,7 @@ const ProfilePage: React.FC = () => {
         alert('✅ Profile updated successfully on server!');
         
         // Update local state
-        setLocalProfile((prev: Profile | null) => ({
+        setLocalProfile(prev => ({
           ...prev!,
           ...data.updateProfile
         }));
@@ -203,12 +201,6 @@ const ProfilePage: React.FC = () => {
       
     } catch (error: any) {
       console.error('❌ Server update failed:', error);
-      console.error('🔍 Error details:', {
-        message: error.message,
-        graphQLErrors: error.graphQLErrors,
-        networkError: error.networkError,
-        extraInfo: error.extraInfo
-      });
       
       // Check if it's an authentication error
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
@@ -221,7 +213,7 @@ const ProfilePage: React.FC = () => {
       
       // Fallback: Save locally
       console.log('💾 Falling back to local save...');
-      setLocalProfile((prev: Profile | null) => ({
+      setLocalProfile(prev => ({
         ...prev!,
         ...updatedData,
         updatedAt: new Date().toISOString()
