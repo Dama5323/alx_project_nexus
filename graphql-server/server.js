@@ -16,6 +16,9 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 
+// Detect if running on Vercel
+const isVercel = process.env.VERCEL === '1';
+
 // ===== SIMPLE USER TRACKING =====
 let currentUserData = {
   id: 'current-user',
@@ -41,12 +44,45 @@ let mockNotifications = [];
 // ===== 1. EXPRESS SETUP =====
 const app = express();
 
+// Update CORS for production
+const allowedOrigins = isVercel 
+  ? [
+      'https://socialfeed.vercel.app',
+      'https://socialfeed-*.vercel.app',
+      'https://*.vercel.app',
+      'http://localhost:3000'
+    ]
+  : ['http://localhost:3000'];
+
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'File too large' });
+  }
+  next(err);
+});
+
+// Handle preflight requests
+app.options('*', cors());
 
 // ===== 2. CLOUDINARY SETUP =====
 console.log('Configuring Cloudinary...');
@@ -63,8 +99,11 @@ try {
 }
 
 // ===== 3. FILE UPLOAD SETUP =====
-// Create uploads directory
-const uploadDir = path.join(__dirname, 'uploads');
+// Create uploads directory - only declare ONCE here
+const uploadDir = isVercel 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -137,7 +176,10 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
     }
     
     // Create URL to access the file
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const baseUrl = isVercel 
+      ? `https://${req.headers.host}`
+      : 'http://localhost:4000';
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
     
     console.log('File saved at:', fileUrl);
     
@@ -161,7 +203,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // Profile image upload endpoint
-// Add this endpoint to server.js (around line 150)
 app.post('/api/avatar/upload', upload.single('avatar'), (req, res) => {
   try {
     console.log('📤 Avatar upload endpoint hit');
@@ -177,7 +218,10 @@ app.post('/api/avatar/upload', upload.single('avatar'), (req, res) => {
     }
     
     // Create URL to access the file
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const baseUrl = isVercel 
+      ? `https://${req.headers.host}`
+      : 'http://localhost:4000';
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
     
     console.log('✅ Avatar saved at:', fileUrl);
     
@@ -221,7 +265,10 @@ app.post('/api/upload/video', videoUpload.single('video'), (req, res) => {
       return res.status(400).json({ error: 'No video uploaded' });
     }
     
-    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    const baseUrl = isVercel 
+      ? `https://${req.headers.host}`
+      : 'http://localhost:4000';
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
     
     console.log('✅ Video saved at:', fileUrl);
     
@@ -1053,10 +1100,7 @@ async function startServer() {
   
   server.applyMiddleware({ 
     app,
-    cors: {
-      origin: ['http://localhost:3000'],
-      credentials: true,
-    }
+    cors: false // Disable Apollo CORS since Express handles it
   });
 
   // ===== 10. ADDITIONAL UTILITY ENDPOINTS =====
@@ -1077,9 +1121,12 @@ async function startServer() {
       const fileDetails = files.map(filename => {
         const filePath = path.join(uploadDir, filename);
         const stats = fs.statSync(filePath);
+        const baseUrl = isVercel 
+          ? `https://${req.headers.host}`
+          : 'http://localhost:4000';
         return {
           filename,
-          url: `http://localhost:4000/uploads/${filename}`,
+          url: `${baseUrl}/uploads/${filename}`,
           size: stats.size,
           created: stats.birthtime,
           mimetype: 'auto-detected'
@@ -1187,8 +1234,8 @@ async function startServer() {
     console.log(`   - Current user: http://localhost:${PORT}/api/current-user`);
     console.log(`   - Update profile: http://localhost:${PORT}/api/update-profile`);
     console.log(`   - Image upload: http://localhost:${PORT}/api/upload`);
-    console.log(`   - Profile upload: http://localhost:${PORT}/api/upload/profile`);
-    console.log(`   - Video upload: http://localhost:4000/api/upload/video`);
+    console.log(`   - Profile upload: http://localhost:${PORT}/api/avatar/upload`);
+    console.log(`   - Video upload: http://localhost:${PORT}/api/upload/video`);
     console.log(`   - Health check: http://localhost:${PORT}/api/health`);
     console.log(`   - List uploads: http://localhost:${PORT}/api/uploads`);
     console.log(`   - Uploads served at: http://localhost:${PORT}/uploads/`);
