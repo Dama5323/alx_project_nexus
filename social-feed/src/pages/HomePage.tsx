@@ -5,7 +5,7 @@ import { LIKE_POST, UNLIKE_POST } from '../graphql/mutations/reactionMutations';
 import { ADD_COMMENT } from '../graphql/mutations/commentMutations';
 import { REPOST } from '../graphql/mutations/repostMutations';
 import { SHARE_POST } from '../graphql/mutations/shareMutations';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { PostActions } from '../components/Post/PostActions';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
@@ -15,9 +15,12 @@ import { PostAnalytics } from '../components/Post/PostAnalytics';
 import BookmarkButton from '../components/engagement/BookmarkButton';
 import FollowButton from '../components/engagement/FollowButton';
 import TrendingSidebar from '../components/trending/TrendingSidebar';
+import CreatePost from '../components/Post/CreatePost';
+import PostComponent from '../components/Post/Post';
+import { getPosts, generateSamplePosts } from '../services/postService';
 
 // Define Post type interface
-interface Post {
+interface PostType {
   id: string;
   content: string;
   author: {
@@ -49,6 +52,70 @@ function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   
+  // Local state for posts (for CreatePost component)
+  const [localPosts, setLocalPosts] = useState<PostType[]>([]);
+  const [loadingLocalPosts, setLoadingLocalPosts] = useState(true);
+  
+  // Convert PostData to PostType
+  const convertToPostType = (postData: any): PostType => {
+    return {
+      id: postData.id || Date.now().toString(),
+      content: postData.content || '',
+      author: postData.author || {
+        id: '1',
+        name: 'Current User',
+        username: '@currentuser',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'
+      },
+      likes: postData.likes || 0,
+      comments: postData.comments || [],
+      shares: postData.shares || 0,
+      reposts: postData.reposts || 0,
+      views: postData.views || 0,
+      isLiked: postData.isLiked || false,
+      isReposted: postData.isReposted || false,
+      isSaved: postData.isSaved || false,
+      images: postData.images || [],
+      video: postData.video,
+    };
+  };
+  
+  // Fetch local posts on component mount
+  useEffect(() => {
+    const fetchLocalPosts = async () => {
+      try {
+        setLoadingLocalPosts(true);
+        const postsData = await getPosts();
+        const convertedPosts = postsData.map(convertToPostType);
+        setLocalPosts(convertedPosts);
+      } catch (error) {
+        console.error('Error fetching local posts:', error);
+      } finally {
+        setLoadingLocalPosts(false);
+      }
+    };
+    
+    fetchLocalPosts();
+  }, []);
+  
+  // Handle new post created from CreatePost component
+  const handlePostCreated = (newPostData: any) => {
+    const newPost = convertToPostType(newPostData);
+    setLocalPosts([newPost, ...localPosts]);
+  };
+  
+  // Generate sample posts
+  const handleGenerateSamplePosts = async () => {
+    try {
+      const samplePostsData = await generateSamplePosts();
+      const convertedPosts = samplePostsData.map(convertToPostType);
+      setLocalPosts(convertedPosts);
+    } catch (error) {
+      console.error('Error generating sample posts:', error);
+    }
+  };
+  
+  // GraphQL queries and mutations
   const { loading, error, data } = useQuery(GET_FEED, {
     variables: { first: 10 }
   });
@@ -72,13 +139,13 @@ function HomePage() {
   });
 
   // Memoize posts to prevent recreation on every render
-  const posts: Post[] = useMemo(() => {
+  const posts: PostType[] = useMemo(() => {
     return data?.feed?.edges.map((edge: any) => edge.node) || [];
   }, [data]);
 
   // Handle like/unlike
   const handleLikeClick = async (postId: string) => {
-    const post = posts.find((p: Post) => p.id === postId);
+    const post = posts.find((p: PostType) => p.id === postId);
     if (!post) return;
     
     if (post.isLiked) {
@@ -264,7 +331,7 @@ function HomePage() {
     }
   };
 
-  // Handle create post
+  // Handle create post via GraphQL
   const handleCreatePost = async () => {
     if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
       alert('Please add content, images, or video');
@@ -288,10 +355,48 @@ function HomePage() {
     }
   };
 
+  // Loading states
   if (loading) return <div>Loading...</div>;
   if (error) {
     console.error('GraphQL Error:', error);
-    return <div>Error loading feed. Check console.</div>;
+    // Fallback to local posts when GraphQL fails
+    return (
+      <div className="max-w-2xl mx-auto">
+        {/* Create Post Section */}
+        <div className="mb-6">
+          <CreatePost onPostCreated={handlePostCreated} />
+        </div>
+
+        {/* Posts Feed */}
+        {loadingLocalPosts ? (
+          <div className="text-center py-8">Loading posts...</div>
+        ) : localPosts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No posts yet. Be the first to post!</p>
+            <button 
+              onClick={handleGenerateSamplePosts}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Generate Sample Posts
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {localPosts.map((post) => (
+              <PostComponent 
+                key={post.id} 
+                post={post}
+                onLike={() => console.log('Like post:', post.id)}
+                onComment={() => console.log('Comment on post:', post.id)}
+                onRepost={() => console.log('Repost:', post.id)}
+                onShare={() => console.log('Share post:', post.id)}
+                onSave={() => console.log('Save post:', post.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -429,194 +534,28 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Create Post Section */}
-        <div style={{padding: '20px', borderBottom: '1px solid #eee', marginBottom: '20px'}}>
-          <textarea 
-            value={newPostContent}
-            onChange={(e) => setNewPostContent(e.target.value)}
-            placeholder="What's happening? Use @ for mentions or # for hashtags..." 
-            style={{
-              width: '100%', 
-              minHeight: '100px', 
-              padding: '12px',
-              fontSize: '16px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              resize: 'vertical',
-              marginBottom: '15px'
-            }}
-          />
+        {/* Also show CreatePost component for local posts */}
+        <div style={{ marginBottom: '20px' }}>
+          <CreatePost onPostCreated={handlePostCreated} />
           
-          {/* Image Preview */}
-          {selectedImages.length > 0 && (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-              gap: '10px',
-              marginBottom: '15px'
-            }}>
-              {selectedImages.map((img, index) => (
-                <div key={index} style={{ position: 'relative' }}>
-                  <img 
-                    src={img} 
-                    alt={`Preview ${index + 1}`}
-                    style={{
-                      width: '100%',
-                      height: '150px',
-                      objectFit: 'cover',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <button
-                    onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
-                    style={{
-                      position: 'absolute',
-                      top: '5px',
-                      right: '5px',
-                      background: 'rgba(0,0,0,0.7)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Video Preview */}
-          {selectedVideo && (
-            <div style={{ position: 'relative', marginBottom: '15px' }}>
-              <video 
-                src={selectedVideo}
-                controls
-                style={{
-                  width: '100%',
-                  maxHeight: '300px',
-                  borderRadius: '8px'
-                }}
-              />
-              <button
-                onClick={() => setSelectedVideo(null)}
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  background: 'rgba(0,0,0,0.7)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '30px',
-                  height: '30px',
-                  cursor: 'pointer'
-                }}
+          {/* Show local posts if GraphQL posts are empty */}
+          {posts.length === 0 && !loadingLocalPosts && localPosts.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No posts yet. Be the first to post!</p>
+              <button 
+                onClick={handleGenerateSamplePosts}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                ×
+                Generate Sample Posts
               </button>
             </div>
           )}
-          
-          {/* Upload Buttons */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            marginBottom: '15px',
-            flexWrap: 'wrap'
-          }}>
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              background: '#f0f0f0',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-              <span>📷</span>
-              Add Images
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
-                disabled={uploading}
-              />
-            </label>
-            
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              background: '#f0f0f0',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-              <span>🎥</span>
-              Add Video
-              <input
-                type="file"
-                ref={videoInputRef}
-                accept="video/*"
-                onChange={handleVideoUpload}
-                style={{ display: 'none' }}
-                disabled={uploading}
-              />
-            </label>
-            
-            <button style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              background: '#f0f0f0',
-              borderRadius: '20px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-              <span>😀</span>
-              GIF
-            </button>
-          </div>
-          
-          <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#666' }}>
-              {selectedImages.length > 0 && `📷 ${selectedImages.length} images `}
-              {selectedVideo && '🎥 Video '}
-              Supports @mentions and #hashtags
-            </div>
-            <button 
-              onClick={handleCreatePost}
-              disabled={(!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) || uploading}
-              style={{
-                padding: '8px 24px',
-                background: (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) ? '#1d9bf0' : '#ddd',
-                color: 'white',
-                border: 'none',
-                borderRadius: '20px',
-                cursor: (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) ? 'pointer' : 'not-allowed',
-                fontSize: '15px',
-                opacity: uploading ? 0.7 : 1
-              }}
-            >
-              {uploading ? 'Uploading...' : 'Post'}
-            </button>
-          </div>
         </div>
 
-        {/* Display Posts */}
+        {/* Display Posts - GraphQL posts first, then local posts */}
         <div>
-          {posts.map((post: Post) => (
+          {/* GraphQL Posts */}
+          {posts.map((post: PostType) => (
             <div key={post.id} style={{
               borderBottom: '1px solid #eee',
               padding: '20px',
@@ -852,6 +791,23 @@ function HomePage() {
               )}
             </div>
           ))}
+          
+          {/* Local Posts (when GraphQL has no posts) */}
+          {posts.length === 0 && localPosts.length > 0 && (
+            <div className="space-y-4">
+              {localPosts.map((post) => (
+                <PostComponent 
+                  key={post.id} 
+                  post={post}
+                  onLike={() => console.log('Like post:', post.id)}
+                  onComment={() => console.log('Comment on post:', post.id)}
+                  onRepost={() => console.log('Repost:', post.id)}
+                  onShare={() => console.log('Share post:', post.id)}
+                  onSave={() => console.log('Save post:', post.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

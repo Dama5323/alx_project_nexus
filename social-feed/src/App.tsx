@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
@@ -20,9 +19,9 @@ import HashtagPage from './pages/HashtagPage';
 import MessagesPage from './pages/MessagesPage';
 import SearchPage from './pages/SearchPage';
 import Sidebar from './components/Sidebar/Sidebar';
+import MobileMenu from './components/Sidebar/MobileMenu'; // ADD THIS IMPORT
 import { ApolloProvider } from '@apollo/client';
 import { client } from './apollo/client';
-
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -64,135 +63,132 @@ function App() {
           <AuthProvider>
             <Router>
               <div className="app-container">
-                {/* Mobile Menu Toggle */}
-                <button 
-                  className="mobile-menu-toggle"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                  {sidebarOpen ? '✕' : '☰'}
-                </button>
-
-                {/* Sidebar */}
-                <div className={`sidebar-container ${sidebarOpen ? 'open' : ''}`}>
+                {/* Mobile Menu */}
+                <MobileMenu />
+                
+                {/* Desktop Sidebar */}
+                <div className="hidden md:block">
                   <Sidebar />
                 </div>
-
+                
                 {/* Main Content */}
-                <div className="main-content">
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/auth" element={
-                      <PublicRoute>
-                        <AuthPage />
-                      </PublicRoute>
-                    } />
-                    
-                    {/* Callback route */}
-                    <Route path="/auth/callback" element={<Callback />} />
-                    
-                    {/* Protected routes */}
-                    <Route path="/" element={
-                      <ProtectedRoute>
-                        <HomePage />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Profile routes */}
-                    <Route path="/profile/:userId" element={
-                      <ProtectedRoute>
-                        <ProfilePage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Navigate to="/profile/me" replace />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/profile/edit" element={
-                      <ProtectedRoute>
-                        <EditProfilePage />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Other protected routes */}
-                    <Route path="/notifications" element={
-                      <ProtectedRoute>
-                        <NotificationsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/analytics" element={
-                      <ProtectedRoute>
-                        <AnalyticsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/bookmarks" element={
-                      <ProtectedRoute>
-                        <BookmarksPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/trending" element={
-                      <ProtectedRoute>
-                        <TrendingPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/hashtag/:hashtag" element={
-                      <ProtectedRoute>
-                        <HashtagPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/messages" element={
-                      <ProtectedRoute>
-                        <MessagesPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/search" element={
-                      <ProtectedRoute>
-                        <SearchPage />
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Add these missing routes for the sidebar */}
-                    <Route path="/explore" element={
-                      <ProtectedRoute>
-                        <TrendingPage /> {/* Using TrendingPage for now, create ExplorePage later */}
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/settings" element={
-                      <ProtectedRoute>
-                        <div className="settings-container">
-                          <div className="settings-content">
-                            <h1>Settings</h1>
-                            <p>Settings page coming soon!</p>
+                <main className="flex-1 md:ml-64 lg:ml-80 overflow-y-auto">
+                  <div className="max-w-4xl mx-auto p-4">
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/auth" element={
+                        <PublicRoute>
+                          <AuthPage />
+                        </PublicRoute>
+                      } />
+                      
+                      {/* Callback route */}
+                      <Route path="/auth/callback" element={<Callback />} />
+                      
+                      {/* Protected routes */}
+                      <Route path="/" element={
+                        <ProtectedRoute>
+                          <HomePage />
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* Profile routes */}
+                      <Route path="/profile/:userId" element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/profile" element={
+                        <ProtectedRoute>
+                          <Navigate to="/profile/me" replace />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/profile/edit" element={
+                        <ProtectedRoute>
+                          <EditProfilePage />
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* Other protected routes */}
+                      <Route path="/notifications" element={
+                        <ProtectedRoute>
+                          <NotificationsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/analytics" element={
+                        <ProtectedRoute>
+                          <AnalyticsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/bookmarks" element={
+                        <ProtectedRoute>
+                          <BookmarksPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/trending" element={
+                        <ProtectedRoute>
+                          <TrendingPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/hashtag/:hashtag" element={
+                        <ProtectedRoute>
+                          <HashtagPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/messages" element={
+                        <ProtectedRoute>
+                          <MessagesPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/search" element={
+                        <ProtectedRoute>
+                          <SearchPage />
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* Add these missing routes for the sidebar */}
+                      <Route path="/explore" element={
+                        <ProtectedRoute>
+                          <TrendingPage /> {/* Using TrendingPage for now, create ExplorePage later */}
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/settings" element={
+                        <ProtectedRoute>
+                          <div className="settings-container">
+                            <div className="settings-content">
+                              <h1>Settings</h1>
+                              <p>Settings page coming soon!</p>
+                            </div>
                           </div>
-                        </div>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/help" element={
-                      <ProtectedRoute>
-                        <div className="help-container">
-                          <div className="help-content">
-                            <h1>Help & Support</h1>
-                            <p>Help page coming soon!</p>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/help" element={
+                        <ProtectedRoute>
+                          <div className="help-container">
+                            <div className="help-content">
+                              <h1>Help & Support</h1>
+                              <p>Help page coming soon!</p>
+                            </div>
                           </div>
-                        </div>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/compose" element={
-                      <ProtectedRoute>
-                        <div className="compose-container">
-                          <div className="compose-content">
-                            <h1>Create Post</h1>
-                            <p>Compose page coming soon! Use the create post in HomePage for now.</p>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/compose" element={
+                        <ProtectedRoute>
+                          <div className="compose-container">
+                            <div className="compose-content">
+                              <h1>Create Post</h1>
+                              <p>Compose page coming soon! Use the create post in HomePage for now.</p>
+                            </div>
                           </div>
-                        </div>
-                      </ProtectedRoute>
-                    } />
-                    
-                    {/* Error routes */}
-                    <Route path="/404" element={<NotFoundPage />} />
-                    <Route path="*" element={<Navigate to="/404" replace />} />
-                  </Routes>
-                </div>
+                        </ProtectedRoute>
+                      } />
+                      
+                      {/* Error routes */}
+                      <Route path="/404" element={<NotFoundPage />} />
+                      <Route path="*" element={<Navigate to="/404" replace />} />
+                    </Routes>
+                  </div>
+                </main>
               </div>
             </Router>
           </AuthProvider>
