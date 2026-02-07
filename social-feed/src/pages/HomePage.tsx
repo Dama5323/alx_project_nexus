@@ -5,7 +5,7 @@ import { LIKE_POST, UNLIKE_POST } from '../graphql/mutations/reactionMutations';
 import { ADD_COMMENT } from '../graphql/mutations/commentMutations';
 import { REPOST } from '../graphql/mutations/repostMutations';
 import { SHARE_POST } from '../graphql/mutations/shareMutations';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { PostActions } from '../components/Post/PostActions';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
@@ -35,6 +35,7 @@ interface Post {
   isReposted: boolean;
   isSaved: boolean;
   images?: string[];
+  video?: string;
 }
 
 function HomePage() {
@@ -42,6 +43,11 @@ function HomePage() {
   const navigate = useNavigate();
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [newPostContent, setNewPostContent] = useState('');
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   
   const { loading, error, data } = useQuery(GET_FEED, {
     variables: { first: 10 }
@@ -188,18 +194,95 @@ function HomePage() {
     navigate('/profile/edit');
   };
 
+  // Handle image upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    setUploading(true);
+    const uploadedImages: string[] = [];
+
+    for (let i = 0; i < Math.min(files.length, 4); i++) {
+      const file = files[i];
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`Image ${file.name} is too large (max 5MB)`);
+        continue;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('http://localhost:4000/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          uploadedImages.push(data.url);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    }
+
+    setSelectedImages(prev => [...prev, ...uploadedImages]);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Handle video upload
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Video is too large (max 50MB)');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const response = await fetch('http://localhost:4000/api/upload/video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedVideo(data.url);
+      }
+    } catch (error) {
+      console.error('Video upload error:', error);
+    } finally {
+      setUploading(false);
+      if (videoInputRef.current) videoInputRef.current.value = '';
+    }
+  };
+
   // Handle create post
   const handleCreatePost = async () => {
-    if (!newPostContent.trim()) return;
-    
+    if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
+      alert('Please add content, images, or video');
+      return;
+    }
+
     try {
       await createPost({ 
         variables: { 
           content: newPostContent,
-          images: [] 
+          images: selectedImages,
+          video: selectedVideo 
         } 
       });
+      
       setNewPostContent('');
+      setSelectedImages([]);
+      setSelectedVideo(null);
     } catch (err) {
       console.error('Post creation failed:', err);
     }
@@ -359,27 +442,174 @@ function HomePage() {
               fontSize: '16px',
               border: '1px solid #ddd',
               borderRadius: '8px',
-              resize: 'vertical'
+              resize: 'vertical',
+              marginBottom: '15px'
             }}
           />
+          
+          {/* Image Preview */}
+          {selectedImages.length > 0 && (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '10px',
+              marginBottom: '15px'
+            }}>
+              {selectedImages.map((img, index) => (
+                <div key={index} style={{ position: 'relative' }}>
+                  <img 
+                    src={img} 
+                    alt={`Preview ${index + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '150px',
+                      objectFit: 'cover',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <button
+                    onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
+                    style={{
+                      position: 'absolute',
+                      top: '5px',
+                      right: '5px',
+                      background: 'rgba(0,0,0,0.7)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Video Preview */}
+          {selectedVideo && (
+            <div style={{ position: 'relative', marginBottom: '15px' }}>
+              <video 
+                src={selectedVideo}
+                controls
+                style={{
+                  width: '100%',
+                  maxHeight: '300px',
+                  borderRadius: '8px'
+                }}
+              />
+              <button
+                onClick={() => setSelectedVideo(null)}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  background: 'rgba(0,0,0,0.7)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '30px',
+                  height: '30px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+          
+          {/* Upload Buttons */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '10px', 
+            marginBottom: '15px',
+            flexWrap: 'wrap'
+          }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              background: '#f0f0f0',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}>
+              <span>📷</span>
+              Add Images
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+                disabled={uploading}
+              />
+            </label>
+            
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              background: '#f0f0f0',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}>
+              <span>🎥</span>
+              Add Video
+              <input
+                type="file"
+                ref={videoInputRef}
+                accept="video/*"
+                onChange={handleVideoUpload}
+                style={{ display: 'none' }}
+                disabled={uploading}
+              />
+            </label>
+            
+            <button style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              background: '#f0f0f0',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}>
+              <span>😀</span>
+              GIF
+            </button>
+          </div>
+          
           <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: '14px', color: '#666' }}>
+              {selectedImages.length > 0 && `📷 ${selectedImages.length} images `}
+              {selectedVideo && '🎥 Video '}
               Supports @mentions and #hashtags
             </div>
             <button 
               onClick={handleCreatePost}
-              disabled={!newPostContent.trim()}
+              disabled={(!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) || uploading}
               style={{
                 padding: '8px 24px',
-                background: newPostContent.trim() ? '#1d9bf0' : '#ddd',
+                background: (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) ? '#1d9bf0' : '#ddd',
                 color: 'white',
                 border: 'none',
                 borderRadius: '20px',
-                cursor: newPostContent.trim() ? 'pointer' : 'not-allowed',
-                fontSize: '15px'
+                cursor: (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) ? 'pointer' : 'not-allowed',
+                fontSize: '15px',
+                opacity: uploading ? 0.7 : 1
               }}
             >
-              Post
+              {uploading ? 'Uploading...' : 'Post'}
             </button>
           </div>
         </div>
@@ -440,15 +670,23 @@ function HomePage() {
                 {post.content.split(/(@\w+|#\w+)/).map((part, index) => {
                   if (part.match(/^@\w+/)) {
                     return (
-                      <span key={index} style={{color: '#1d9bf0', fontWeight: '500'}}>
+                      <Link 
+                        key={index} 
+                        to={`/profile/${part.substring(1)}`}
+                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
+                      >
                         {part}
-                      </span>
+                      </Link>
                     );
                   } else if (part.match(/^#\w+/)) {
                     return (
-                      <span key={index} style={{color: '#1d9bf0', fontWeight: '500'}}>
+                      <Link 
+                        key={index} 
+                        to={`/hashtag/${encodeURIComponent(part.substring(1))}`}
+                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
+                      >
                         {part}
-                      </span>
+                      </Link>
                     );
                   }
                   return <span key={index}>{part}</span>;
@@ -470,6 +708,20 @@ function HomePage() {
                   }} 
                 />
               ))}
+              
+              {/* Video */}
+              {post.video && (
+                <video 
+                  src={post.video}
+                  controls
+                  style={{
+                    maxWidth: '100%',
+                    borderRadius: '12px',
+                    marginTop: '10px',
+                    maxHeight: '400px'
+                  }}
+                />
+              )}
               
               {/* Post Stats & Analytics */}
               <div style={{

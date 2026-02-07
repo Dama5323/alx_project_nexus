@@ -36,6 +36,9 @@ let currentUserData = {
   isBlocked: false
 };
 
+// Add mock notifications array
+let mockNotifications = [];
+
 // ===== 1. EXPRESS SETUP =====
 const app = express();
 
@@ -223,6 +226,42 @@ const typeDefs = gql`
     isFollowedBy: Boolean!
   }
 
+  type Notification {
+    id: ID!
+    type: String!
+    message: String!
+    userId: ID!
+    senderId: ID!
+    isRead: Boolean!
+    createdAt: String!
+  }
+
+  type Analytics {
+    totalPosts: Int!
+    totalLikes: Int!
+    totalComments: Int!
+    totalShares: Int!
+    totalViews: Int!
+    followerGrowth: Float!
+    engagementRate: Float!
+    topPosts: [TopPost!]!
+    peakTimes: [String!]!
+  }
+
+  type TopPost {
+    id: ID!
+    content: String!
+    likes: Int!
+    comments: Int!
+    views: Int!
+  }
+
+  type HashtagStats {
+    postCount: Int!
+    trendScore: Int!
+    growth: Float!
+  }
+
   input UpdateProfileInput {
     name: String
     username: String
@@ -237,6 +276,11 @@ const typeDefs = gql`
     user(username: String!): User
     userPosts(userId: ID!, first: Int!, after: String): PostConnection
     followStatus(userId: ID!): FollowStatus
+    userAnalytics(userId: ID!, timeRange: String!): Analytics
+    userNotifications(userId: ID!): [Notification!]!
+    hashtagPosts(hashtag: String!, sortBy: String!): [Post!]!
+    hashtagStats(hashtag: String!): HashtagStats
+    trendingHashtags(limit: Int!): [String!]!
   }
 
   type Mutation {
@@ -272,6 +316,10 @@ const typeDefs = gql`
     updateProfile(input: UpdateProfileInput!): User!
     followUser(userId: ID!): User!
     unfollowUser(userId: ID!): User!
+
+    # Notifications
+    markNotificationAsRead(notificationId: ID!): Notification!
+    markAllNotificationsAsRead(userId: ID!): MutationResponse!
   }
 `;
 
@@ -279,18 +327,18 @@ const typeDefs = gql`
 let mockPosts = [
   {
     id: '1',
-    content: 'Just launched my new project! 🚀',
-    images: ['https://picsum.photos/seed/post1/800/600'],
+    content: 'Just launched my new project! 🚀 #WebDevelopment #ReactJS',
+    images: ['https://res.cloudinary.com/dzyqof9it/image/upload/v1758369967/architecture_diagrams/fl47pqr9swm3bwoysshx.jpg'],
     video: null,
     author: {
       id: 'user2',
-      name: 'Sarah Johnson',
-      username: 'sarahj',
-      email: 'sarah.johnson@example.com',
-      avatar: 'https://i.pravatar.cc/150?img=2',
+      name: 'Gillian Shih',
+      username: 'gillian',
+      email: 'gillian.shih@example.com',
+      avatar: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770419352/ava_ivuuzq.webp',
       bio: 'Software Developer',
-      website: 'https://sarahj.dev',
-      location: 'New York, NY',
+      website: 'https://shi.dev',
+      location: 'Nakuru, Kenya',
       followers: 1250,
       following: 340,
       postsCount: 42,
@@ -307,7 +355,7 @@ let mockPosts = [
         content: 'Amazing work! 👏',
         author: {
           id: 'user3',
-          name: 'Mike Chen',
+          name: 'Mike Chege',
           username: 'mikechen',
           email: 'mike@example.com',
           avatar: 'https://i.pravatar.cc/150?img=3',
@@ -339,7 +387,7 @@ let mockPosts = [
   },
   {
     id: '2',
-    content: 'Working on something exciting! Stay tuned.',
+    content: 'Working on something exciting! Stay tuned. #AI #Tech',
     images: [],
     video: null,
     author: currentUserData, // Use the tracked user data
@@ -422,6 +470,87 @@ const resolvers = {
         isFollowing: false,
         isFollowedBy: false
       };
+    },
+
+    userAnalytics: (_, { userId, timeRange }) => {
+      // Mock analytics data
+      return {
+        totalPosts: 42,
+        totalLikes: 1250,
+        totalComments: 340,
+        totalShares: 180,
+        totalViews: 5600,
+        followerGrowth: 12.5,
+        engagementRate: 4.2,
+        topPosts: [
+          {
+            id: '1',
+            content: 'Just launched my new project! 🚀',
+            likes: 245,
+            comments: 18,
+            views: 1200
+          },
+          {
+            id: '2',
+            content: 'Working on something exciting!',
+            likes: 45,
+            comments: 3,
+            views: 300
+          }
+        ],
+        peakTimes: ['10:00 AM', '2:00 PM', '8:00 PM']
+      };
+    },
+
+    userNotifications: (_, { userId }) => {
+      return mockNotifications.filter(n => n.userId === userId);
+    },
+
+    hashtagPosts: (_, { hashtag, sortBy }) => {
+      // Filter posts by hashtag
+      const hashtagPosts = mockPosts.filter(post => 
+        post.content.toLowerCase().includes(`#${hashtag.toLowerCase()}`)
+      );
+      
+      // Sort based on criteria
+      if (sortBy === 'popular') {
+        return hashtagPosts.sort((a, b) => b.likes - a.likes);
+      } else {
+        // Recent - sort by date (already sorted in mockPosts)
+        return hashtagPosts;
+      }
+    },
+
+    hashtagStats: (_, { hashtag }) => {
+      const postsWithHashtag = mockPosts.filter(post => 
+        post.content.toLowerCase().includes(`#${hashtag.toLowerCase()}`)
+      ).length;
+      
+      return {
+        postCount: postsWithHashtag,
+        trendScore: postsWithHashtag * 10,
+        growth: postsWithHashtag > 5 ? 25.5 : 5.2
+      };
+    },
+
+    trendingHashtags: (_, { limit }) => {
+      // Extract hashtags from posts
+      const allHashtags = mockPosts.flatMap(post => {
+        const matches = post.content.match(/#\w+/g) || [];
+        return matches.map(tag => tag.substring(1).toLowerCase());
+      });
+      
+      // Count frequencies
+      const hashtagCounts = {};
+      allHashtags.forEach(tag => {
+        hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
+      });
+      
+      // Sort by frequency and return top N
+      return Object.entries(hashtagCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, limit)
+        .map(([tag]) => tag);
     }
   },
   
@@ -453,6 +582,21 @@ const resolvers = {
       if (post) {
         post.likes += 1;
         post.isLiked = true;
+        
+        // Create like notification
+        if (post.author.id !== currentUserData.id) {
+          const likeNotification = {
+            id: `notification-${Date.now()}`,
+            type: 'like',
+            message: `${currentUserData.name} liked your post`,
+            userId: post.author.id,
+            senderId: currentUserData.id,
+            isRead: false,
+            createdAt: new Date().toISOString()
+          };
+          mockNotifications.push(likeNotification);
+        }
+        
         return post;
       }
       throw new Error('Post not found');
@@ -484,6 +628,21 @@ const resolvers = {
       };
       
       post.comments.push(newComment);
+      
+      // Create comment notification
+      if (post.author.id !== currentUserData.id) {
+        const commentNotification = {
+          id: `notification-${Date.now()}`,
+          type: 'comment',
+          message: `${currentUserData.name} commented on your post`,
+          userId: post.author.id,
+          senderId: currentUserData.id,
+          isRead: false,
+          createdAt: new Date().toISOString()
+        };
+        mockNotifications.push(commentNotification);
+      }
+      
       return newComment;
     },
     
@@ -493,12 +652,28 @@ const resolvers = {
         if (comment) {
           comment.likes += 1;
           comment.isLiked = true;
+          
+          // Create like notification for comment author
+          if (comment.author.id !== currentUserData.id) {
+            const likeNotification = {
+              id: `notification-${Date.now()}`,
+              type: 'like',
+              message: `${currentUserData.name} liked your comment`,
+              userId: comment.author.id,
+              senderId: currentUserData.id,
+              isRead: false,
+              createdAt: new Date().toISOString()
+            };
+            mockNotifications.push(likeNotification);
+          }
+          
           return comment;
         }
       }
       throw new Error('Comment not found');
     },
-     savePost: (_, { postId }) => {
+    
+    savePost: (_, { postId }) => {
       const post = mockPosts.find(p => p.id === postId);
       if (!post) throw new Error('Post not found');
       
@@ -521,6 +696,20 @@ const resolvers = {
       if (!post.isReposted) {
         post.reposts += 1;
         post.isReposted = true;
+        
+        // Create repost notification
+        if (post.author.id !== currentUserData.id) {
+          const repostNotification = {
+            id: `notification-${Date.now()}`,
+            type: 'repost',
+            message: `${currentUserData.name} reposted your post`,
+            userId: post.author.id,
+            senderId: currentUserData.id,
+            isRead: false,
+            createdAt: new Date().toISOString()
+          };
+          mockNotifications.push(repostNotification);
+        }
       }
 
       return post;
@@ -599,6 +788,19 @@ const resolvers = {
     },
     
     followUser: (_, { userId }) => {
+      // Create a notification for the followed user
+      const followNotification = {
+        id: `notification-${Date.now()}`,
+        type: 'follow',
+        message: `${currentUserData.name} started following you`,
+        userId: userId,
+        senderId: currentUserData.id,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+      
+      mockNotifications.push(followNotification);
+      
       return {
         id: userId,
         followers: 1251,
@@ -616,6 +818,24 @@ const resolvers = {
         postsCount: 42,
         isFollowing: false
       };
+    },
+
+    markNotificationAsRead: (_, { notificationId }) => {
+      const notification = mockNotifications.find(n => n.id === notificationId);
+      if (!notification) throw new Error('Notification not found');
+      
+      notification.isRead = true;
+      return notification;
+    },
+
+    markAllNotificationsAsRead: (_, { userId }) => {
+      mockNotifications.forEach(notification => {
+        if (notification.userId === userId) {
+          notification.isRead = true;
+        }
+      });
+      
+      return { success: true, message: 'All notifications marked as read' };
     }
   }
 };
@@ -641,16 +861,42 @@ async function startServer() {
     }
   });
 
+  // Add video upload endpoint
+  app.post('/api/upload/video', upload.single('video'), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No video uploaded' });
+      }
+      
+      const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+      
+      res.json({ 
+        success: true,
+        url: fileUrl,
+        filename: req.file.filename
+      });
+      
+    } catch (error) {
+      res.status(500).json({ 
+        error: 'Failed to upload video',
+        details: error.message
+      });
+    }
+  });
+
   const PORT = 4000;
   app.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
-    console.log(`📤 Upload endpoint at http://localhost:${PORT}/api/upload`);
+    console.log(`📤 Image upload endpoint at http://localhost:${PORT}/api/upload`);
+    console.log(`🎥 Video upload endpoint at http://localhost:${PORT}/api/upload/video`);
     console.log(`📁 Uploads served at http://localhost:${PORT}/uploads/`);
-    console.log(`✅ Profile features are now available:`);
-    console.log(`   - User profile queries`);
-    console.log(`   - Edit profile mutations`);
-    console.log(`   - Follow/Unfollow system`);
-    console.log(`   - User posts feed`);
+    console.log(`✅ Enhanced features now available:`);
+    console.log(`   - Analytics dashboard with user statistics`);
+    console.log(`   - Clickable hashtags with dedicated pages`);
+    console.log(`   - Follow notifications for users`);
+    console.log(`   - Image/video upload support`);
+    console.log(`   - Trending hashtags`);
+    console.log(`   - Post notifications (likes, comments, reposts)`);
   });
 }
 

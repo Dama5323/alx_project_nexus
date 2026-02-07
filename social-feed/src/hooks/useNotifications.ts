@@ -145,9 +145,22 @@ export const useNotifications = (limit = 10) => {
     }
   }, [loading, hasMore]);
 
+  // Subscription for real-time updates
+  const subscribeToNotifications = useCallback(() => {
+    // In a real app, you would use WebSockets or GraphQL subscriptions
+    // For now, we'll poll every 30 seconds
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+    const cleanup = subscribeToNotifications();
+    return cleanup;
+  }, [fetchNotifications, subscribeToNotifications]);
 
   return {
     notifications,

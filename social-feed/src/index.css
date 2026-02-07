@@ -186,3 +186,28 @@ pre code {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* ===============================
+   WHO TO FOLLOW – RESPONSIVE FIX
+================================ */
+.who-to-follow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .who-to-follow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===============================
+   TRENDING LINKS CLICK FIX
+================================ */
+.trending-link {
+  cursor: pointer;
+  pointer-events: auto;
+  text-decoration: underline;
+  z-index: 2;
+}
+

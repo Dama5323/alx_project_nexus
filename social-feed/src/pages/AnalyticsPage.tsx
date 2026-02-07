@@ -1,221 +1,245 @@
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { GET_USER_ANALYTICS } from '../graphql/queries/engagementQueries';
+import { GET_USER_ANALYTICS } from '../graphql/queries/analyticsQueries';
 import { useAuth } from '../hooks/useAuth';
-import { formatNumber, calculateEngagementRate } from '../utils/analytics/index';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell
-} from 'recharts';
+import { formatNumber } from '../utils/helpers/formatNumbers';
+import './AnalyticsPage.css';
+
+// Mock data for testing
+const getMockAnalytics = () => ({
+  totalPosts: 42,
+  totalLikes: 1250,
+  totalComments: 340,
+  totalShares: 180,
+  totalViews: 5600,
+  followerGrowth: 12.5,
+  engagementRate: 4.2,
+  topPosts: [
+    {
+      id: '1',
+      content: 'Just launched my new project! 🚀 #WebDevelopment #ReactJS',
+      likes: 245,
+      comments: 18,
+      views: 1200
+    },
+    {
+      id: '2',
+      content: 'Working on something exciting! Stay tuned. #AI #Tech',
+      likes: 45,
+      comments: 3,
+      views: 300
+    },
+    {
+      id: '3',
+      content: 'The future of web development is here! #JavaScript #Trending',
+      likes: 89,
+      comments: 12,
+      views: 450
+    }
+  ],
+  peakTimes: ['10:00 AM', '2:00 PM', '8:00 PM']
+});
 
 const AnalyticsPage: React.FC = () => {
   const { user } = useAuth();
-  const [period, setPeriod] = useState('week');
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
   
-  const { data, loading, error } = useQuery(GET_USER_ANALYTICS, {
-    variables: { userId: user?.id },
-    skip: !user
+  // Use mock data for testing, or query if backend is ready
+  const useMockData = true; // Set to false when backend is ready
+  
+  const { loading, error, data } = useQuery(GET_USER_ANALYTICS, {
+    variables: { 
+      userId: user?.id || "user-damachege", // Fallback ID
+      timeRange 
+    },
+    skip: !user?.id || useMockData // Skip query if using mock data
   });
 
-  const analytics = data?.userAnalytics;
+  // Use mock data if enabled or if there's an error
+  const analytics = useMockData || error ? getMockAnalytics() : (data?.userAnalytics || getMockAnalytics());
 
-  // Mock data for charts (replace with actual data)
-  const engagementData = [
-    { day: 'Mon', likes: 240, comments: 45, shares: 12 },
-    { day: 'Tue', likes: 320, comments: 67, shares: 18 },
-    { day: 'Wed', likes: 290, comments: 52, shares: 15 },
-    { day: 'Thu', likes: 380, comments: 78, shares: 22 },
-    { day: 'Fri', likes: 410, comments: 89, shares: 25 },
-    { day: 'Sat', likes: 350, comments: 72, shares: 19 },
-    { day: 'Sun', likes: 280, comments: 58, shares: 16 }
-  ];
-
-  const audienceData = [
-    { name: '18-24', value: 35 },
-    { name: '25-34', value: 40 },
-    { name: '35-44', value: 15 },
-    { name: '45+', value: 10 }
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-  if (loading) {
+  if (!user) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading analytics...</p>
+      <div className="analytics-container">
+        <div className="analytics-content">
+          <div className="error">
+            <h2>Please log in to view analytics</h2>
+            <p>You need to be logged in to access your analytics dashboard.</p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (loading && !useMockData) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Error loading analytics. Please try again.</p>
+      <div className="analytics-container">
+        <div className="analytics-content">
+          <div className="loading">
+            <div className="loading-spinner"></div>
+            <p>Loading analytics...</p>
+          </div>
         </div>
       </div>
     );
   }
+
+  // Show mock data notice if using mock data
+  const isMockData = useMockData || error;
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-        <p className="text-gray-600 mt-1">Track your performance and engagement</p>
-      </div>
-
-      {/* Period Selector */}
-      <div className="flex gap-2 mb-8">
-        {['day', 'week', 'month', 'year'].map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={`px-4 py-2 rounded-lg capitalize ${
-              period === p
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Followers</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {formatNumber(analytics?.followers || 0)}
-              </p>
-              <p className="text-sm text-green-600 mt-1">↑ 12% from last month</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-full">
-              <span className="text-2xl">👥</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Engagement Rate</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {analytics?.engagement?.toFixed(1) || '0.0'}%
-              </p>
-              <p className="text-sm text-green-600 mt-1">↑ 3.2% from last week</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-full">
-              <span className="text-2xl">📈</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Posts</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {analytics?.posts || 0}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">Total published</p>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-full">
-              <span className="text-2xl">📝</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Following</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
-                {formatNumber(analytics?.following || 0)}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">Accounts you follow</p>
-            </div>
-            <div className="p-3 bg-yellow-50 rounded-full">
-              <span className="text-2xl">🔍</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Engagement Chart */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Overview</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={engagementData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="likes" fill="#3b82f6" name="Likes" />
-                <Bar dataKey="comments" fill="#10b981" name="Comments" />
-                <Bar dataKey="shares" fill="#8b5cf6" name="Shares" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Audience Demographics */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Audience Age Distribution</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-  <PieChart>
-    <Pie
-      data={audienceData}
-      cx="50%"
-      cy="50%"
-      labelLine={false}
-      label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-      outerRadius={80}
-      fill="#8884d8"
-      dataKey="value"
-    />
-    <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
-  </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Posts */}
-      <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Posts</h3>
-        <div className="space-y-4">
-          {analytics?.topPosts?.slice(0, 5).map((post: any) => (
-            <div key={post.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-              <div className="flex-1">
-                <p className="text-gray-900 line-clamp-2">{post.content}</p>
-                <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                  <span>❤️ {formatNumber(post.likes)}</span>
-                  <span>💬 {formatNumber(post.comments)}</span>
-                  <span>🔄 {formatNumber(post.shares)}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-lg font-semibold text-gray-900">
-                  {calculateEngagementRate(post.likes, post.comments, post.shares, 1000).toFixed(1)}%
-                </p>
-                <p className="text-sm text-gray-600">Engagement rate</p>
-              </div>
-            </div>
-          )) || (
-            <p className="text-gray-600 text-center py-8">No posts data available yet</p>
+    <div className="analytics-container">
+      <div className="analytics-content">
+        <div className="analytics-header">
+          <h1>Analytics Dashboard</h1>
+          {isMockData && (
+            <p className="mock-notice">
+              ⚠️ Displaying sample data. Connect to backend for real analytics.
+            </p>
           )}
+          
+          <div className="time-range-selector">
+            <button 
+              className={`time-range-btn ${timeRange === '7d' ? 'active' : ''}`}
+              onClick={() => setTimeRange('7d')}
+            >
+              7 Days
+            </button>
+            <button 
+              className={`time-range-btn ${timeRange === '30d' ? 'active' : ''}`}
+              onClick={() => setTimeRange('30d')}
+            >
+              30 Days
+            </button>
+            <button 
+              className={`time-range-btn ${timeRange === '90d' ? 'active' : ''}`}
+              onClick={() => setTimeRange('90d')}
+            >
+              90 Days
+            </button>
+          </div>
         </div>
+
+        {error && !useMockData && (
+          <div className="error">
+            <h3>⚠️ Backend Connection Failed</h3>
+            <p>Using sample data. Error: {error.message}</p>
+          </div>
+        )}
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <h3>Total Posts</h3>
+            <div className="stat-value">{formatNumber(analytics.totalPosts)}</div>
+            <div className="stat-change positive">
+              <span>↗</span>
+              <span>+12.5%</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Total Likes</h3>
+            <div className="stat-value">{formatNumber(analytics.totalLikes)}</div>
+            <div className="stat-change positive">
+              <span>↗</span>
+              <span>+8.3%</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Total Comments</h3>
+            <div className="stat-value">{formatNumber(analytics.totalComments)}</div>
+            <div className="stat-change positive">
+              <span>↗</span>
+              <span>+5.7%</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <h3>Total Views</h3>
+            <div className="stat-value">{formatNumber(analytics.totalViews)}</div>
+            <div className="stat-change positive">
+              <span>↗</span>
+              <span>+15.2%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2>Engagement Overview</h2>
+            <span className="time-period">Last {timeRange === '7d' ? '7' : timeRange === '30d' ? '30' : '90'} days</span>
+          </div>
+          <div className="engagement-chart">
+            <div className="chart-placeholder">
+              <div className="chart-bars">
+                {[65, 80, 45, 90, 75, 85, 60].map((height, index) => (
+                  <div 
+                    key={index}
+                    className="chart-bar"
+                    style={{ height: `${height}%` }}
+                  ></div>
+                ))}
+              </div>
+              <div className="chart-labels">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span>
+                <span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+            </div>
+            <div className="chart-summary">
+              <div className="summary-item">
+                <span className="summary-label">Engagement Rate</span>
+                <span className="summary-value">{analytics.engagementRate.toFixed(1)}%</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Follower Growth</span>
+                <span className="summary-value positive">+{analytics.followerGrowth.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {analytics.topPosts.length > 0 && (
+          <div className="top-posts-section">
+            <h2>Top Performing Posts</h2>
+            <div className="posts-list">
+              {analytics.topPosts.map((post: any, index: number) => (
+                <div key={post.id} className="post-item">
+                  <div className="post-rank">#{index + 1}</div>
+                  <div className="post-content">
+                    <p className="post-text">{post.content.substring(0, 80)}{post.content.length > 80 ? '...' : ''}</p>
+                    <div className="post-stats">
+                      <span title="Likes">❤️ {formatNumber(post.likes)}</span>
+                      <span title="Comments">💬 {formatNumber(post.comments)}</span>
+                      <span title="Views">👁️ {formatNumber(post.views)}</span>
+                    </div>
+                  </div>
+                  <button className="view-post-btn">View Post</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {analytics.peakTimes.length > 0 && (
+          <div className="peak-times-section">
+            <h2>Peak Engagement Times</h2>
+            <div className="peak-times">
+              {analytics.peakTimes.map((time: string, index: number) => (
+                <div key={index} className="time-slot">
+                  <span className="time">{time}</span>
+                  <div className="time-bar">
+                    <div 
+                      className="time-fill" 
+                      style={{ width: `${80 - (index * 10)}%` }}
+                    ></div>
+                  </div>
+                  <span className="time-percentage">{80 - (index * 10)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

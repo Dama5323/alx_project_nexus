@@ -1,6 +1,29 @@
 import { gql } from '@apollo/client';
 import { USER_FRAGMENT } from '../fragments';
 
+
+export const GET_USER_ANALYTICS = gql`
+  query GetUserAnalytics($userId: ID!, $timeRange: String!) {
+    userAnalytics(userId: $userId, timeRange: $timeRange) {
+      totalPosts
+      totalLikes
+      totalComments
+      totalShares
+      totalViews
+      followerGrowth
+      engagementRate
+      topPosts {
+        id
+        content
+        likes
+        comments
+        views
+      }
+      peakTimes
+    }
+  }
+`;
+
 export const GET_POST_ANALYTICS = gql`
   query GetPostAnalytics($postId: ID!) {
     postAnalytics(postId: $postId) {
