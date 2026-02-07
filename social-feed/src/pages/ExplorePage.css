@@ -1,0 +1,65 @@
+/* src/pages/ExplorePage.css */
+.explore-page {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.explore-header {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.explore-header h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #2d3748;
+}
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 12px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 25px;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.search-bar button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  width: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.trending-section, .discover-section {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.trending-section h2, .discover-section h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #2d3748;
+}

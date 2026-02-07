@@ -1,0 +1,251 @@
+/* src/pages/HomePage.css */
+.homepage-centered {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px;
+}
+
+.create-post-centered {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  display: flex;
+  gap: 15px;
+}
+
+.user-avatar img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-input-container {
+  flex: 1;
+}
+
+.post-input-container textarea {
+  width: 100%;
+  border: none;
+  font-size: 18px;
+  font-family: 'Inter', sans-serif;
+  resize: none;
+  padding: 10px 0;
+  min-height: 80px;
+}
+
+.post-input-container textarea:focus {
+  outline: none;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.media-options {
+  display: flex;
+  gap: 15px;
+}
+
+.media-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.media-btn:hover {
+  background: #f7fafc;
+}
+
+.post-submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.post-submit-btn:hover {
+  transform: translateY(-2px);
+}
+
+.post-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.selected-images {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.image-preview {
+  position: relative;
+}
+
+.image-preview img {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.posts-feed-centered {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.post-card-centered {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 12px;
+}
+
+.post-header img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-user-info {
+  flex: 1;
+}
+
+.post-user-info strong {
+  display: block;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.post-user-info span {
+  color: #a0aec0;
+  font-size: 14px;
+}
+
+.delete-post-btn {
+  background: none;
+  border: none;
+  color: #e53e3e;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.delete-post-btn:hover {
+  background: #fff5f5;
+}
+
+.post-content {
+  margin-bottom: 15px;
+}
+
+.post-content p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.post-media img {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 10px;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.post-engagement {
+  display: flex;
+  justify-content: space-around;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.engagement-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.engagement-btn:hover {
+  background: #f7fafc;
+  color: #667eea;
+}
+
+.original-create-post {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.local-posts {
+  margin-top: 20px;
+}
+
+.local-posts h3 {
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 15px;
+  color: #2d3748;
+}
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #667eea;
+}
