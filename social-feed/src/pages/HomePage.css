@@ -1,210 +1,151 @@
 /* src/pages/HomePage.css */
+
+/* Base container - FIXED */
 .homepage-centered {
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
-  padding: 20px;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
+/* Ensure everything stays within screen */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Create Post Card - FIXED */
 .create-post-centered {
   background: white;
   border-radius: 20px;
-  padding: 24px;
+  padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
   display: flex;
   gap: 15px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
+/* User Avatar - FIXED */
 .user-avatar img {
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
+/* Post Input Container - FIXED */
 .post-input-container {
   flex: 1;
+  min-width: 0; /* Prevents overflow */
 }
 
 .post-input-container textarea {
   width: 100%;
   border: none;
-  font-size: 18px;
+  font-size: 16px;
   font-family: 'Inter', sans-serif;
   resize: none;
   padding: 10px 0;
-  min-height: 80px;
+  min-height: 60px;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
-.post-input-container textarea:focus {
-  outline: none;
-}
-
-.post-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.media-options {
-  display: flex;
-  gap: 15px;
-}
-
-.media-btn {
-  background: none;
-  border: none;
-  color: #667eea;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.media-btn:hover {
-  background: #f7fafc;
-}
-
-.post-submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.post-submit-btn:hover {
-  transform: translateY(-2px);
-}
-
-.post-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.selected-images {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-
-.image-preview {
-  position: relative;
-}
-
-.image-preview img {
-  width: 100px;
-  height: 100px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.remove-image-btn {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.posts-feed-centered {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
+/* Post Card - FIXED */
 .post-card-centered {
   background: white;
   border-radius: 20px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  margin-bottom: 15px;
 }
 
+/* Post Header - FIXED */
 .post-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 15px;
   gap: 12px;
+  width: 100%;
 }
 
 .post-header img {
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .post-user-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .post-user-info strong {
   display: block;
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .post-user-info span {
   color: #a0aec0;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
-.delete-post-btn {
-  background: none;
-  border: none;
-  color: #e53e3e;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.delete-post-btn:hover {
-  background: #fff5f5;
-}
-
+/* Post Content - FIXED */
 .post-content {
   margin-bottom: 15px;
+  width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .post-content p {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
   color: #2d3748;
   margin-bottom: 15px;
+  word-break: break-word;
 }
 
+/* Media - FIXED */
 .post-media img {
   width: 100%;
+  max-height: 400px;
   border-radius: 12px;
   margin-top: 10px;
-  max-height: 400px;
   object-fit: cover;
 }
 
+/* Engagement Buttons - FIXED */
 .post-engagement {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   padding-top: 15px;
   border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .engagement-btn {
@@ -214,131 +155,113 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 6px 10px;
   border-radius: 8px;
   transition: all 0.2s ease;
-}
-
-.engagement-btn:hover {
-  background: #f7fafc;
-  color: #667eea;
-}
-
-.original-create-post {
-  margin-top: 30px;
-  padding-top: 30px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.local-posts {
-  margin-top: 20px;
-}
-
-.local-posts h3 {
-  font-family: 'Poppins', sans-serif;
-  margin-bottom: 15px;
-  color: #2d3748;
-}
-
-.loading-screen {
-  display: flex;
+  font-size: 14px;
+  flex: 1;
+  min-width: 60px;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 18px;
-  color: #667eea;
 }
 
-/* Add these to your existing HomePage.css */
-
-.post-submit-btn.secondary {
-  background: #4a5568;
-}
-
-.post-submit-btn.secondary:hover {
-  background: #2d3748;
-}
-
-.selected-media, .selected-video {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.selected-media h4, .selected-video h4 {
-  margin: 0 0 10px 0;
-  color: #2d3748;
-  font-size: 16px;
-}
-
-.video-preview {
-  position: relative;
-}
-
-.remove-video-btn {
-  margin-top: 10px;
-  padding: 8px 16px;
-  background: #e53e3e;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.remove-video-btn:hover {
-  background: #c53030;
-}
-
-.generate-posts-btn {
-  padding: 10px 20px;
-  background: #48bb78;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.generate-posts-btn:hover {
-  background: #38a169;
-}
-
-.generate-posts-btn:disabled {
-  background: #a0aec0;
-  cursor: not-allowed;
-}
-
-.post-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+/* Media Options - FIXED */
+.media-options {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-top: 15px;
 }
 
-.post-video {
-  margin-top: 15px;
+.media-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
 }
 
-.comment-input-section {
-  margin-top: 15px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 15px;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .homepage-centered {
+    padding: 10px;
+    max-width: 100%;
+  }
+  
+  .create-post-centered {
+    padding: 15px;
+    flex-direction: column;
+  }
+  
+  .user-avatar {
+    display: none;
+  }
+  
+  .post-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .media-options {
+    justify-content: center;
+  }
+  
+  .post-submit-btn {
+    width: 100%;
+  }
+  
+  .engagement-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    min-width: 50px;
+  }
+  
+  .post-card-centered {
+    padding: 15px;
+  }
+  
+  .post-user-info strong {
+    font-size: 14px;
+  }
+  
+  .post-user-info span {
+    font-size: 12px;
+  }
 }
 
-.comment-input-section input {
-  width: 100%;
-  padding: 10px 15px;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-.comment-input-section input:focus {
-  outline: none;
-  border-color: #667eea;
+@media (max-width: 480px) {
+  .homepage-centered {
+    padding: 8px;
+  }
+  
+  .create-post-centered {
+    padding: 12px;
+  }
+  
+  .post-card-centered {
+    padding: 12px;
+  }
+  
+  .engagement-btn span {
+    display: none;
+  }
+  
+  .engagement-btn {
+    justify-content: center;
+    padding: 6px;
+  }
+  
+  .media-options {
+    justify-content: space-between;
+  }
+  
+  .media-btn span {
+    display: none;
+  }
 }
