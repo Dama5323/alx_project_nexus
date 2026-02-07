@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
       <div className="user-profile">
         <Link to={`/profile/${user?.id || 'me'}`}>
           <img 
-            src={user?.avatar || 'https://i.pravatar.cc/150?img=1'} 
+            src={user?.avatar || 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770419352/ava_ivuuzq.webp'}
             alt={user?.name || 'User'} 
             className="user-avatar"
           />
@@ -120,14 +120,35 @@ const Sidebar: React.FC = () => {
       </div>
 
       {/* Copyright */}
-      <div className="sidebar-footer">
-        <p className="copyright">© 2024 Social Feed</p>
-        <div className="footer-links">
-          <Link to="/terms">Terms</Link>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/cookies">Cookies</Link>
-        </div>
-      </div>
+    <div className="sidebar-footer">
+    <p className="copyright">© 2026 Social Feed</p>
+
+    <div className="footer-links">
+        <a
+        href="https://github.com/Dama5323"
+        target="_blank"
+        rel="noopener noreferrer"
+        >
+        GitHub
+        </a>
+
+        <a
+        href="https://www.linkedin.com/in/dama5323"
+        target="_blank"
+        rel="noopener noreferrer"
+        >
+        LinkedIn
+        </a>
+
+        <a
+        href="https://dama5323.github.io/DamaChege_Portfolio/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >
+        Portfolio
+        </a>
+    </div>
+    </div>
     </div>
   );
 };

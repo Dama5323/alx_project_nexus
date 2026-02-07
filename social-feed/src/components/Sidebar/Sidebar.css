@@ -1,4 +1,5 @@
-/* Sidebar.css */
+/* Sidebar.css - COMPLETE FIXED VERSION */
+
 .sidebar {
   width: 280px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -13,7 +14,7 @@
   z-index: 1000;
 }
 
-/* User Profile */
+/* FIXED User Profile Section */
 .user-profile {
   margin-bottom: 30px;
   padding-bottom: 20px;
@@ -36,16 +37,60 @@
   transform: translateX(5px);
 }
 
+/* FIXED Avatar - Option 1: Using container */
+.user-avatar-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.user-avatar-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #667eea;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+/* Alternative: Simple fix */
+.user-avatar-simple {
   width: 60px;
   height: 60px;
   border-radius: 50%;
   border: 3px solid #667eea;
-  object-fit: cover;
+  object-fit: contain; /* Change from cover to contain */
+  background-color: white;
+  padding: 2px;
+}
+
+/* Alternative: Background image approach */
+.user-avatar-bg {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #667eea;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-color: #f0f0f0; /* Fallback color */
 }
 
 .user-info {
   flex: 1;
+  min-width: 0;
 }
 
 .user-name {
@@ -53,6 +98,9 @@
   font-size: 18px;
   font-weight: 700;
   color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-handle {
@@ -60,8 +108,12 @@
   font-size: 14px;
   color: #a0aec0;
   opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* The rest of your CSS remains the same... */
 /* Navigation */
 .sidebar-nav {
   margin-bottom: 25px;

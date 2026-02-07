@@ -1,42 +1,53 @@
 // src/pages/EditProfilePage.tsx - CORRECTED VERSION
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMutation } from '@apollo/client';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { UPDATE_PROFILE } from '../graphql/mutations/userMutations';
+import AvatarUpload from '../components/Profile/AvatarUpload';
+import './EditProfilepage.css';
 
-// Define types for Cloudinary response
-interface CloudinaryUploadResponse {
+// Define types for upload response
+interface UploadResponse {
   success: boolean;
   url: string;
   optimizedUrl?: string;
   publicId?: string;
+  message?: string;
 }
 
 function EditProfilePage() {
-  const { user, updateUserProfile } = useAuth(); // Get both user and updateUserProfile
+  const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Initialize with user data
-  const [name, setName] = useState(user?.name || '');
-  const [bio, setBio] = useState((user as any)?.bio || '');
-  const [username, setUsername] = useState((user as any)?.username || '');
+  // Form state
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    username: user?.username || '',
+    bio: (user as any)?.bio || '',
+    location: (user as any)?.location || '',
+    website: (user as any)?.website || '',
+  });
   
   // Avatar state
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
   
+  // UI state
   const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState(''); // Added success message state
+  const [successMessage, setSuccessMessage] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Refs
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Use UPDATE_PROFILE mutation
-  const [updateProfile, { loading }] = useMutation(UPDATE_PROFILE, {
+  // Update profile mutation
+  const [updateProfile, { loading: isUpdating }] = useMutation(UPDATE_PROFILE, {
     onCompleted: (data: any) => {
       console.log('✅ Profile updated successfully:', data);
+      
       if (data.updateProfile) {
         // Update auth context
         if (updateUserProfile) {
@@ -46,17 +57,20 @@ function EditProfilePage() {
         setSuccessMessage('Profile updated successfully! Redirecting...');
         
         // Update local state
-        setName(data.updateProfile.name);
-        setUsername(data.updateProfile.username);
-        setBio(data.updateProfile.bio || '');
+        setFormData({
+          name: data.updateProfile.name || '',
+          username: data.updateProfile.username || '',
+          bio: data.updateProfile.bio || '',
+          location: data.updateProfile.location || '',
+          website: data.updateProfile.website || '',
+        });
         setAvatarPreview(data.updateProfile.avatar);
         setAvatarUrl(data.updateProfile.avatar);
         setAvatarFile(null);
         
-        // ⭐⭐⭐ ADD THIS - REDIRECT TO HOME AFTER 1.5 SECONDS ⭐⭐⭐
+        // Redirect to home after 1.5 seconds
         setTimeout(() => {
-          navigate('/'); // Redirect to home page
-          // OR navigate('/dashboard'); // If your home route is different
+          navigate('/');
         }, 1500);
       }
     },
@@ -67,76 +81,25 @@ function EditProfilePage() {
     }
   });
   
-  // Upload image
-  const uploadImage = async (file: File): Promise<string> => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    try {
-      const xhr = new XMLHttpRequest();
-      
-      return new Promise((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded * 100) / event.total);
-            setUploadProgress(progress);
-          }
-        });
-        
-        xhr.addEventListener('load', () => {
-          if (xhr.status === 200) {
-            const response: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
-            setIsUploading(false);
-            setUploadProgress(100);
-            resolve(response.optimizedUrl || response.url);
-          } else {
-            reject(new Error('Upload failed'));
-          }
-        });
-        
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error'));
-        });
-        
-        xhr.open('POST', 'http://localhost:4000/api/upload');
-        xhr.send(formData);
-      });
-      
-    } catch (error) {
-      setIsUploading(false);
-      console.error('Upload error:', error);
-      
-      // Fallback: Convert to data URL
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setIsUploading(false);
-          resolve(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
   // Handle file selection
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       setErrorMessage('Please select an image file (JPEG, PNG, etc.)');
       return;
     }
 
+    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setErrorMessage('Image size should be less than 5MB');
       return;
     }
 
     setAvatarFile(file);
+    setErrorMessage('');
     
     // Create local preview
     const reader = new FileReader();
@@ -144,10 +107,64 @@ function EditProfilePage() {
       setAvatarPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-    
-    setErrorMessage('');
   };
 
+  // Upload image to server
+  const uploadImageToServer = async (file: File): Promise<string> => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+      const response = await fetch('http://localhost:4000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+
+      const data: UploadResponse = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Upload failed');
+      }
+
+      setIsUploading(false);
+      setUploadProgress(100);
+      
+      return data.optimizedUrl || data.url;
+      
+    } catch (error) {
+      setIsUploading(false);
+      console.error('Upload error:', error);
+      
+      // Fallback: Convert to data URL (local preview only)
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setIsUploading(false);
+          const dataUrl = reader.result as string;
+          resolve(dataUrl);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -155,13 +172,13 @@ function EditProfilePage() {
     
     let finalAvatarUrl = avatarUrl;
     
-    // If a new file was selected, upload it
+    // If a new file was selected, upload it first
     if (avatarFile) {
       try {
-        finalAvatarUrl = await uploadImage(avatarFile);
+        finalAvatarUrl = await uploadImageToServer(avatarFile);
         setAvatarUrl(finalAvatarUrl);
-      } catch (error) {
-        setErrorMessage('Failed to upload image. Please try again.');
+      } catch (error: any) {
+        setErrorMessage(`Failed to upload image: ${error.message}`);
         console.error('Image upload failed:', error);
         return;
       }
@@ -170,18 +187,25 @@ function EditProfilePage() {
     try {
       console.log('🚀 Updating profile...');
       
+      // Prepare the input data according to GraphQL schema
+      const inputData = {
+        name: formData.name.trim(),
+        username: formData.username.trim(),
+        bio: formData.bio?.trim() || '',
+        location: formData.location?.trim() || '',
+        website: formData.website?.trim() || '',
+        avatar: finalAvatarUrl || user?.avatar || '',
+      };
+
+      console.log('📤 Sending profile data:', inputData);
+      
       await updateProfile({
         variables: {
-          input: {
-            name,
-            bio,
-            avatar: finalAvatarUrl,
-            username
-          }
+          input: inputData
         }
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Failed to update profile:', error);
       setErrorMessage('Failed to update profile. Please try again.');
     }
@@ -192,7 +216,7 @@ function EditProfilePage() {
     fileInputRef.current?.click();
   };
 
-  // Remove avatar
+  // Remove avatar and reset to original
   const handleRemoveAvatar = () => {
     setAvatarFile(null);
     setAvatarPreview(user?.avatar || '');
@@ -202,172 +226,103 @@ function EditProfilePage() {
     }
   };
 
+  // Cancel editing and go back
+  const handleCancel = () => {
+    navigate('/profile');
+  };
+
   if (!user) {
     return (
-      <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px' }}>
-        <p>Please log in to edit your profile.</p>
+      <div className="edit-profile-container">
+        <div className="login-prompt">
+          <p>Please log in to edit your profile.</p>
+          <button 
+            onClick={() => navigate('/auth')}
+            className="login-btn"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px' }}>
+    <div className="edit-profile-container">
       <h1>Edit Profile</h1>
       
       {errorMessage && (
-        <div style={{
-          padding: '10px',
-          background: '#ffebee',
-          color: '#c62828',
-          borderRadius: '4px',
-          marginBottom: '20px'
-        }}>
-          {errorMessage}
+        <div className="error-message">
+          ❌ {errorMessage}
         </div>
       )}
       
       {successMessage && (
-        <div style={{
-          padding: '10px',
-          background: '#e8f5e9',
-          color: '#2e7d32',
-          borderRadius: '4px',
-          marginBottom: '20px',
-          border: '1px solid #c8e6c9'
-        }}>
+        <div className="success-message">
           ✅ {successMessage}
         </div>
       )}
       
       <form onSubmit={handleSubmit}>
         {/* Avatar Upload Section */}
-        <div style={{ 
-          marginBottom: '30px', 
-          textAlign: 'center',
-          position: 'relative'
-        }}>
+        <div className="form-section">
+          <h3>Profile Picture</h3>
+          <AvatarUpload />
+        </div>
+
+        {/* Additional Avatar Controls (optional) */}
+        <div className="form-section">
           <div 
             onClick={handleAvatarClick}
-            style={{ 
-              cursor: 'pointer',
-              display: 'inline-block',
-              position: 'relative'
-            }}
+            className="avatar-container"
+            style={{ cursor: 'pointer' }}
           >
-            <div style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              margin: '0 auto 15px',
-              border: '3px solid #e0e0e0',
-              position: 'relative'
-            }}>
+            <div className="avatar-preview">
               {avatarPreview ? (
                 <img 
                   src={avatarPreview} 
                   alt="Profile preview" 
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
+                  className="avatar-image"
                 />
               ) : (
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  background: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '40px',
-                  color: '#999'
-                }}>
-                  {name.charAt(0).toUpperCase()}
+                <div className="avatar-placeholder">
+                  {formData.name.charAt(0).toUpperCase()}
                 </div>
               )}
               
               {/* Upload overlay */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.2s',
-                color: 'white',
-                fontSize: '14px',
-                textAlign: 'center',
-                padding: '10px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '1';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '0';
-              }}
-              >
+              <div className="avatar-overlay">
                 {isUploading ? 'Uploading...' : 'Click to change photo'}
               </div>
             </div>
             
             {/* Upload progress bar */}
             {isUploading && (
-              <div style={{
-                position: 'absolute',
-                bottom: '-10px',
-                left: '10%',
-                right: '10%',
-                height: '4px',
-                background: '#e0e0e0',
-                borderRadius: '2px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${uploadProgress}%`,
-                  height: '100%',
-                  background: '#1d9bf0',
-                  transition: 'width 0.3s'
-                }}></div>
+              <div className="upload-progress">
+                <div 
+                  className="progress-bar"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
               </div>
             )}
           </div>
           
-          {/* File input (hidden) */}
+          {/* Hidden file input */}
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileSelect}
             accept="image/*"
+            className="file-input"
             style={{ display: 'none' }}
           />
           
-          {/* File info and controls */}
-          <div style={{ 
-            marginTop: '10px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            alignItems: 'center'
-          }}>
+          {/* File controls */}
+          <div className="avatar-controls">
             <button
               type="button"
               onClick={handleAvatarClick}
-              style={{
-                padding: '6px 16px',
-                background: '#f0f0f0',
-                color: '#333',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
+              className="change-photo-btn"
               disabled={isUploading}
             >
               {avatarPreview !== user?.avatar ? 'Change Photo' : 'Upload Photo'}
@@ -377,163 +332,114 @@ function EditProfilePage() {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                style={{
-                  padding: '4px 12px',
-                  background: 'transparent',
-                  color: '#ff4444',
-                  border: '1px solid #ff4444',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
+                className="reset-photo-btn"
                 disabled={isUploading}
               >
                 Reset to Current Photo
               </button>
             )}
             
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div className="upload-info">
               {isUploading ? `Uploading... ${uploadProgress}%` : 'JPEG, PNG or GIF • Max 5MB'}
             </div>
           </div>
         </div>
         
         {/* Form fields */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#333'
-          }}>
-            Name *
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
-            }}
-            required
-            placeholder="Your full name"
-            disabled={isUploading}
-          />
-        </div>
-        
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#333'
-          }}>
-            Username *
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box'
-            }}
-            required
-            placeholder="username"
-            disabled={isUploading}
-          />
-        </div>
-        
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: '8px',
-            fontWeight: '500',
-            color: '#333'
-          }}>
-            Bio
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px',
-              boxSizing: 'border-box',
-              resize: 'vertical',
-              fontFamily: 'inherit'
-            }}
-            placeholder="Tell us about yourself"
-            maxLength={160}
-            disabled={isUploading}
-          />
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#666', 
-            textAlign: 'right',
-            marginTop: '5px'
-          }}>
-            {bio.length}/160 characters
+        <div className="form-section">
+          <div className="form-group">
+            <label htmlFor="name">Name *</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              placeholder="Your full name"
+              disabled={isUploading || isUpdating}
+              className="form-input"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="username">Username *</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              placeholder="username"
+              disabled={isUploading || isUpdating}
+              className="form-input"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="bio">Bio</label>
+            <textarea
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={4}
+              placeholder="Tell us about yourself"
+              maxLength={160}
+              disabled={isUploading || isUpdating}
+              className="form-textarea"
+            />
+            <div className="character-count">
+              {formData.bio.length}/160 characters
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="location">Location</label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="City, Country"
+              disabled={isUploading || isUpdating}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="website">Website</label>
+            <input
+              type="url"
+              id="website"
+              name="website"
+              value={formData.website}
+              onChange={handleInputChange}
+              placeholder="https://example.com"
+              disabled={isUploading || isUpdating}
+              className="form-input"
+            />
           </div>
         </div>
         
         {/* Action buttons */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '15px',
-          justifyContent: 'flex-end',
-          marginTop: '30px',
-          paddingTop: '20px',
-          borderTop: '1px solid #eee'
-        }}>
+        <div className="form-actions">
           <button
             type="button"
-            onClick={() => navigate(-1)}
-            style={{
-              padding: '12px 24px',
-              background: '#f5f5f5',
-              color: '#333',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: '500',
-              minWidth: '100px'
-            }}
-            disabled={loading || isUploading}
+            onClick={handleCancel}
+            className="cancel-btn"
+            disabled={isUploading || isUpdating}
           >
             Cancel
           </button>
           <button
             type="submit"
-            style={{
-              padding: '12px 24px',
-              background: '#1d9bf0',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: '500',
-              minWidth: '150px',
-              opacity: (loading || isUploading) ? 0.7 : 1
-            }}
-            disabled={loading || isUploading}
+            className="submit-btn"
+            disabled={isUploading || isUpdating}
           >
-            {isUploading ? 'Uploading...' : loading ? 'Saving...' : 'Save Changes'}
+            {isUploading ? 'Uploading...' : isUpdating ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

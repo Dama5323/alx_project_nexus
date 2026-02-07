@@ -28,16 +28,21 @@
 }
 
 .sidebar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 280px;
-  flex-shrink: 0;
+  height: 100vh;
+  background: transparent;
+  z-index: 1000;
 }
 
 .main-content {
-  flex: 1;
   margin-left: 280px;
-  padding: 20px;
+  padding: 24px;
   min-height: 100vh;
 }
+
 
 /* Loading Screen */
 .loading-screen {

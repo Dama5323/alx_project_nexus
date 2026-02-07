@@ -21,7 +21,8 @@ import MessagesPage from './pages/MessagesPage';
 import SearchPage from './pages/SearchPage';
 import Sidebar from './components/Sidebar/Sidebar';
 import { ApolloProvider } from '@apollo/client';
-import client from './apollo/client';
+import { client } from './apollo/client';
+
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -12,7 +12,6 @@ const express = require('express');
 const { ApolloServer, gql } = require('apollo-server-express');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -20,13 +19,13 @@ const path = require('path');
 // ===== SIMPLE USER TRACKING =====
 let currentUserData = {
   id: 'current-user',
-  name: 'Current User',
-  username: 'currentuser',
-  email: 'current@example.com',
-  avatar: 'https://i.pravatar.cc/150?img=1',
-  bio: 'I am the current user',
-  website: 'https://currentuser.dev',
-  location: 'Remote',
+  name: 'Damaris Chege', 
+  username: 'deenyashke', 
+  email: 'damaris@example.com',
+  avatar: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770419352/ava_ivuuzq.webp',
+  bio: 'Software developer from Kenya',
+  website: 'dama5323.github.io/DamaChege_Portfolio/',
+  location: 'Nairobi, Kenya',
   followers: 100,
   following: 50,
   postsCount: 10,
@@ -63,12 +62,27 @@ try {
   console.log('Using mock Cloudinary configuration for testing');
 }
 
-// ===== 3. SIMPLE UPLOAD ENDPOINT (No Cloudinary for now) =====
+// ===== 3. FILE UPLOAD SETUP =====
 // Create uploads directory
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+// File filter for upload validation
+const fileFilter = (req, file, cb) => {
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+  const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+  
+  const isImage = allowedImageTypes.includes(file.mimetype);
+  const isVideo = allowedVideoTypes.includes(file.mimetype);
+  
+  if (isImage || isVideo) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file type: ${file.mimetype}. Only images and videos are allowed.`), false);
+  }
+};
 
 // Configure multer for local storage
 const storage = multer.diskStorage({
@@ -77,19 +91,41 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
 });
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  fileFilter: fileFilter,
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB for images
+    files: 1 // Limit to 1 file per request
+  }
+});
+
+const videoUpload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+    if (allowedVideoTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid video file type. Only MP4, WebM, and OGG are allowed.'), false);
+    }
+  },
+  limits: { 
+    fileSize: 50 * 1024 * 1024, // 50MB for videos
+    files: 1
+  }
 });
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(uploadDir));
 
-// Simple upload endpoint
+// ===== 4. UPLOAD ENDPOINTS =====
+// General image upload endpoint
 app.post('/api/upload', upload.single('image'), (req, res) => {
   try {
     console.log('📤 Upload endpoint hit');
@@ -110,20 +146,116 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
       url: fileUrl,
       optimizedUrl: fileUrl,
       filename: req.file.filename,
-      path: req.file.path
+      path: req.file.path,
+      mimetype: req.file.mimetype,
+      size: req.file.size
     });
     
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ 
       error: 'Failed to upload image',
-      details: error.message,
-      stack: error.stack
+      details: error.message
     });
   }
 });
 
-// ===== 4. TYPE DEFINITIONS =====
+// Profile image upload endpoint
+// Add this endpoint to server.js (around line 150)
+app.post('/api/avatar/upload', upload.single('avatar'), (req, res) => {
+  try {
+    console.log('📤 Avatar upload endpoint hit');
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    // Validate it's an image
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedImageTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({ error: 'Only image files are allowed for avatars' });
+    }
+    
+    // Create URL to access the file
+    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    
+    console.log('✅ Avatar saved at:', fileUrl);
+    
+    // Update the current user's avatar
+    currentUserData.avatar = fileUrl;
+    
+    // Update avatar in all posts
+    mockPosts.forEach(post => {
+      if (post.author.id === 'current-user') {
+        post.author.avatar = fileUrl;
+      }
+      post.comments.forEach(comment => {
+        if (comment.author.id === 'current-user') {
+          comment.author.avatar = fileUrl;
+        }
+      });
+    });
+    
+    res.json({ 
+      success: true,
+      url: fileUrl,
+      message: 'Avatar updated successfully',
+      user: currentUserData
+    });
+    
+  } catch (error) {
+    console.error('❌ Avatar upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload avatar',
+      details: error.message
+    });
+  }
+});
+
+// Video upload endpoint
+app.post('/api/upload/video', videoUpload.single('video'), (req, res) => {
+  try {
+    console.log('🎥 Video upload endpoint hit');
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video uploaded' });
+    }
+    
+    const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+    
+    console.log('✅ Video saved at:', fileUrl);
+    
+    res.json({ 
+      success: true,
+      url: fileUrl,
+      filename: req.file.filename,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+    
+  } catch (error) {
+    console.error('❌ Video upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload video',
+      details: error.message
+    });
+  }
+});
+
+// ===== 5. AUTHENTICATION HELPER =====
+const getUserFromToken = (token) => {
+  if (!token) return null;
+  
+  try {
+    // For testing, return the current user data
+    return currentUserData;
+  } catch (error) {
+    console.error('Error getting user from token:', error);
+    return null;
+  }
+};
+
+// ===== 6. TYPE DEFINITIONS =====
 const typeDefs = gql`
   type User {
     id: ID!
@@ -323,7 +455,7 @@ const typeDefs = gql`
   }
 `;
 
-// ===== 5. COMPLETE MOCK DATA =====
+// ===== 7. COMPLETE MOCK DATA =====
 let mockPosts = [
   {
     id: '1',
@@ -390,7 +522,7 @@ let mockPosts = [
     content: 'Working on something exciting! Stay tuned. #AI #Tech',
     images: [],
     video: null,
-    author: currentUserData, // Use the tracked user data
+    author: currentUserData,
     likes: 45,
     comments: [],
     shares: 3,
@@ -406,7 +538,7 @@ let mockPosts = [
 
 let commentId = 2;
 
-// ===== 6. RESOLVERS =====
+// ===== 8. RESOLVERS =====
 const resolvers = {
   Query: {
     feed: (_, { first = 10, after, filter }) => {
@@ -428,6 +560,12 @@ const resolvers = {
     },
 
     user: (_, { username }) => {
+      // Check if this is the current user
+      if (username === 'deenyashke' || username === 'currentuser') {
+        return currentUserData;
+      }
+      
+      // Return other mock users
       const mockUser = {
         id: 'user123',
         name: 'John Doe',
@@ -473,7 +611,6 @@ const resolvers = {
     },
 
     userAnalytics: (_, { userId, timeRange }) => {
-      // Mock analytics data
       return {
         totalPosts: 42,
         totalLikes: 1250,
@@ -507,16 +644,13 @@ const resolvers = {
     },
 
     hashtagPosts: (_, { hashtag, sortBy }) => {
-      // Filter posts by hashtag
       const hashtagPosts = mockPosts.filter(post => 
         post.content.toLowerCase().includes(`#${hashtag.toLowerCase()}`)
       );
       
-      // Sort based on criteria
       if (sortBy === 'popular') {
         return hashtagPosts.sort((a, b) => b.likes - a.likes);
       } else {
-        // Recent - sort by date (already sorted in mockPosts)
         return hashtagPosts;
       }
     },
@@ -534,19 +668,16 @@ const resolvers = {
     },
 
     trendingHashtags: (_, { limit }) => {
-      // Extract hashtags from posts
       const allHashtags = mockPosts.flatMap(post => {
         const matches = post.content.match(/#\w+/g) || [];
         return matches.map(tag => tag.substring(1).toLowerCase());
       });
       
-      // Count frequencies
       const hashtagCounts = {};
       allHashtags.forEach(tag => {
         hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
       });
       
-      // Sort by frequency and return top N
       return Object.entries(hashtagCounts)
         .sort(([,a], [,b]) => b - a)
         .slice(0, limit)
@@ -555,13 +686,16 @@ const resolvers = {
   },
   
   Mutation: {
-    createPost: (_, { content, images }) => {
+    createPost: (_, { content, images }, context) => {
+      console.log('Creating post with context:', context);
+      const user = currentUserData; // Always use currentUserData for now
+      
       const newPost = {
         id: `post${mockPosts.length + 1}`,
         content,
         images: images || [],
         video: null,
-        author: currentUserData, // Use the tracked user data
+        author: user,
         likes: 0,
         comments: [],
         shares: 0,
@@ -577,20 +711,30 @@ const resolvers = {
       return newPost;
     },
     
-    likePost: (_, { postId }) => {
+    deletePost: (_, { postId }) => {
+      const postIndex = mockPosts.findIndex(p => p.id === postId);
+      if (postIndex === -1) {
+        throw new Error('Post not found');
+      }
+      mockPosts.splice(postIndex, 1);
+      return { success: true, message: 'Post deleted successfully' };
+    },
+    
+    likePost: (_, { postId }, context) => {
       const post = mockPosts.find(p => p.id === postId);
       if (post) {
+        const user = currentUserData;
+        
         post.likes += 1;
         post.isLiked = true;
         
-        // Create like notification
-        if (post.author.id !== currentUserData.id) {
+        if (post.author.id !== user.id) {
           const likeNotification = {
             id: `notification-${Date.now()}`,
             type: 'like',
-            message: `${currentUserData.name} liked your post`,
+            message: `${user.name} liked your post`,
             userId: post.author.id,
-            senderId: currentUserData.id,
+            senderId: user.id,
             isRead: false,
             createdAt: new Date().toISOString()
           };
@@ -612,15 +756,17 @@ const resolvers = {
       throw new Error('Post not found');
     },
     
-    addComment: (_, { postId, content }) => {
+    addComment: (_, { postId, content }, context) => {
       const post = mockPosts.find(p => p.id === postId);
       if (!post) throw new Error('Post not found');
+      
+      const user = currentUserData;
       
       const newComment = {
         id: `comment${commentId++}`,
         postId,
         content,
-        author: currentUserData, // Use the tracked user data
+        author: user,
         likes: 0,
         createdAt: new Date().toISOString(),
         updatedAt: null,
@@ -629,14 +775,13 @@ const resolvers = {
       
       post.comments.push(newComment);
       
-      // Create comment notification
-      if (post.author.id !== currentUserData.id) {
+      if (post.author.id !== user.id) {
         const commentNotification = {
           id: `notification-${Date.now()}`,
           type: 'comment',
-          message: `${currentUserData.name} commented on your post`,
+          message: `${user.name} commented on your post`,
           userId: post.author.id,
-          senderId: currentUserData.id,
+          senderId: user.id,
           isRead: false,
           createdAt: new Date().toISOString()
         };
@@ -646,6 +791,17 @@ const resolvers = {
       return newComment;
     },
     
+    deleteComment: (_, { commentId }) => {
+      for (const post of mockPosts) {
+        const commentIndex = post.comments.findIndex(c => c.id === commentId);
+        if (commentIndex !== -1) {
+          post.comments.splice(commentIndex, 1);
+          return { success: true, message: 'Comment deleted successfully' };
+        }
+      }
+      throw new Error('Comment not found');
+    },
+    
     likeComment: (_, { commentId }) => {
       for (const post of mockPosts) {
         const comment = post.comments.find(c => c.id === commentId);
@@ -653,7 +809,6 @@ const resolvers = {
           comment.likes += 1;
           comment.isLiked = true;
           
-          // Create like notification for comment author
           if (comment.author.id !== currentUserData.id) {
             const likeNotification = {
               id: `notification-${Date.now()}`,
@@ -689,7 +844,7 @@ const resolvers = {
       return post;
     },
 
-    repost: (_, { postId }) => {
+    repost: (_, { postId, comment }) => {
       const post = mockPosts.find(p => p.id === postId);
       if (!post) throw new Error('Post not found');
 
@@ -697,7 +852,6 @@ const resolvers = {
         post.reposts += 1;
         post.isReposted = true;
         
-        // Create repost notification
         if (post.author.id !== currentUserData.id) {
           const repostNotification = {
             id: `notification-${Date.now()}`,
@@ -757,21 +911,31 @@ const resolvers = {
       return {
         id: `reaction${Date.now()}`,
         type,
-        user: currentUserData, // Use the tracked user data
+        user: currentUserData,
         createdAt: new Date().toISOString(),
       };
     },
 
-    updateProfile: (_, { input }) => {
+    removeReaction: (_, { postId }) => {
+      const post = mockPosts.find(p => p.id === postId);
+      if (!post) throw new Error('Post not found');
+      
+      post.likes = Math.max(0, post.likes - 1);
+      post.isLiked = false;
+      
+      return { success: true, message: 'Reaction removed' };
+    },
+
+    updateProfile: (_, { input }, context) => {
       console.log('Update profile called with input:', input);
       
-      // Update the tracked user data
+      // Update the current user data
       currentUserData = {
         ...currentUserData,
         name: input.name || currentUserData.name,
         username: input.username || currentUserData.username,
         avatar: input.avatar || currentUserData.avatar,
-        bio: input.bio || '', // Return empty string instead of default
+        bio: input.bio || currentUserData.bio,
         website: input.website || currentUserData.website,
         location: input.location || currentUserData.location
       };
@@ -783,12 +947,20 @@ const resolvers = {
         }
       });
       
+      // Update comments
+      mockPosts.forEach(post => {
+        post.comments.forEach(comment => {
+          if (comment.author.id === 'current-user') {
+            comment.author = currentUserData;
+          }
+        });
+      });
+      
       console.log('Updated user data:', currentUserData);
       return currentUserData;
     },
     
     followUser: (_, { userId }) => {
-      // Create a notification for the followed user
       const followNotification = {
         id: `notification-${Date.now()}`,
         type: 'follow',
@@ -803,6 +975,8 @@ const resolvers = {
       
       return {
         id: userId,
+        name: 'Test User',
+        username: 'testuser',
         followers: 1251,
         following: 340,
         postsCount: 42,
@@ -813,6 +987,8 @@ const resolvers = {
     unfollowUser: (_, { userId }) => {
       return {
         id: userId,
+        name: 'Test User',
+        username: 'testuser',
         followers: 1250,
         following: 340,
         postsCount: 42,
@@ -840,14 +1016,36 @@ const resolvers = {
   }
 };
 
-// ===== 7. CREATE APOLLO SERVER =====
+// ===== 9. CREATE APOLLO SERVER =====
 async function startServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
     context: ({ req }) => {
+      // Get token from headers
       const token = req.headers.authorization || '';
-      return { token };
+      
+      // Extract actual token (remove 'Bearer ' prefix if present)
+      const authToken = token.replace('Bearer ', '');
+      
+      // Get user from token
+      const user = getUserFromToken(authToken);
+      
+      return { 
+        token: authToken,
+        user: user || currentUserData
+      };
+    },
+    formatError: (error) => {
+      console.error('GraphQL Error:', error);
+      return {
+        message: error.message,
+        locations: error.locations,
+        path: error.path,
+        extensions: {
+          code: error.extensions?.code || 'INTERNAL_SERVER_ERROR'
+        }
+      };
     }
   });
 
@@ -861,45 +1059,160 @@ async function startServer() {
     }
   });
 
-  // Add video upload endpoint
-  app.post('/api/upload/video', upload.single('video'), (req, res) => {
+  // ===== 10. ADDITIONAL UTILITY ENDPOINTS =====
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  // Get all uploads endpoint
+  app.get('/api/uploads', (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No video uploaded' });
-      }
-      
-      const fileUrl = `http://localhost:4000/uploads/${req.file.filename}`;
+      const files = fs.readdirSync(uploadDir);
+      const fileDetails = files.map(filename => {
+        const filePath = path.join(uploadDir, filename);
+        const stats = fs.statSync(filePath);
+        return {
+          filename,
+          url: `http://localhost:4000/uploads/${filename}`,
+          size: stats.size,
+          created: stats.birthtime,
+          mimetype: 'auto-detected'
+        };
+      });
       
       res.json({ 
         success: true,
-        url: fileUrl,
-        filename: req.file.filename
+        files: fileDetails,
+        total: fileDetails.length
       });
-      
     } catch (error) {
       res.status(500).json({ 
-        error: 'Failed to upload video',
+        error: 'Failed to list uploads',
         details: error.message
       });
     }
   });
 
-  const PORT = 4000;
+  // Delete upload endpoint
+  app.delete('/api/upload/:filename', (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filePath = path.join(uploadDir, filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      
+      fs.unlinkSync(filePath);
+      
+      res.json({ 
+        success: true,
+        message: 'File deleted successfully'
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: 'Failed to delete file',
+        details: error.message
+      });
+    }
+  });
+
+  // Current user endpoint
+  app.get('/api/current-user', (req, res) => {
+    res.json({
+      success: true,
+      user: currentUserData
+    });
+  });
+
+  // Update current user endpoint
+  app.post('/api/update-profile', (req, res) => {
+    try {
+      const { name, username, bio, website, location, avatar } = req.body;
+      
+      currentUserData = {
+        ...currentUserData,
+        name: name || currentUserData.name,
+        username: username || currentUserData.username,
+        bio: bio || currentUserData.bio,
+        website: website || currentUserData.website,
+        location: location || currentUserData.location,
+        avatar: avatar || currentUserData.avatar
+      };
+      
+      res.json({
+        success: true,
+        user: currentUserData,
+        message: 'Profile updated successfully'
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: 'Failed to update profile',
+        details: error.message
+      });
+    }
+  });
+
+  // ===== 11. ERROR HANDLING MIDDLEWARE =====
+  app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({ 
+      error: 'Not Found',
+      message: `Cannot ${req.method} ${req.url}`,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // ===== 12. START SERVER =====
+  const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
-    console.log(`📤 Image upload endpoint at http://localhost:${PORT}/api/upload`);
-    console.log(`🎥 Video upload endpoint at http://localhost:${PORT}/api/upload/video`);
-    console.log(`📁 Uploads served at http://localhost:${PORT}/uploads/`);
-    console.log(`✅ Enhanced features now available:`);
+    console.log(`\n🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`\n📊 Available endpoints:`);
+    console.log(`   - GraphQL API: http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`   - Current user: http://localhost:${PORT}/api/current-user`);
+    console.log(`   - Update profile: http://localhost:${PORT}/api/update-profile`);
+    console.log(`   - Image upload: http://localhost:${PORT}/api/upload`);
+    console.log(`   - Profile upload: http://localhost:${PORT}/api/upload/profile`);
+    console.log(`   - Video upload: http://localhost:4000/api/upload/video`);
+    console.log(`   - Health check: http://localhost:${PORT}/api/health`);
+    console.log(`   - List uploads: http://localhost:${PORT}/api/uploads`);
+    console.log(`   - Uploads served at: http://localhost:${PORT}/uploads/`);
+    console.log(`\n👤 Current user:`);
+    console.log(`   Name: ${currentUserData.name}`);
+    console.log(`   Username: @${currentUserData.username}`);
+    console.log(`   Bio: ${currentUserData.bio}`);
+    console.log(`\n✅ Enhanced features available:`);
     console.log(`   - Analytics dashboard with user statistics`);
     console.log(`   - Clickable hashtags with dedicated pages`);
     console.log(`   - Follow notifications for users`);
-    console.log(`   - Image/video upload support`);
+    console.log(`   - Image/video upload with validation`);
     console.log(`   - Trending hashtags`);
     console.log(`   - Post notifications (likes, comments, reposts)`);
+    console.log(`   - File type validation (images & videos)`);
+    console.log(`   - Error handling middleware`);
+    console.log(`   - Health check endpoint`);
+    console.log(`\n📁 Upload directory: ${uploadDir}`);
+    console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`⏱️  Server started at: ${new Date().toISOString()}`);
   });
 }
 
 startServer().catch(error => {
   console.error('Failed to start server:', error);
+  process.exit(1);
 });
