@@ -55,6 +55,8 @@ interface SimplePost {
   comments: number;
   retweets: number;
   likes: number;
+  video?: string;
+  images?: string[];
 }
 
 const HomePage: React.FC = () => {
@@ -130,7 +132,7 @@ const HomePage: React.FC = () => {
 
   // Handle new post in centered layout
   const handleNewPost = () => {
-    if (newPostContent.trim()) {
+    if (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) {
       const newPost: SimplePost = {
         id: Date.now().toString(),
         userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
@@ -138,6 +140,8 @@ const HomePage: React.FC = () => {
         handle: user?.username || 'currentuser',
         time: 'just now',
         content: newPostContent,
+        images: selectedImages,
+        video: selectedVideo || undefined,
         comments: 0,
         retweets: 0,
         likes: 0
@@ -150,7 +154,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handle media upload for centered layout
+  // Handle image upload for centered layout
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -174,6 +178,29 @@ const HomePage: React.FC = () => {
         };
         reader.readAsDataURL(file);
       }
+    }, 1000);
+  };
+
+  // Handle video upload for centered layout
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (!file) return;
+
+    setUploading(true);
+    
+    // Simulate upload
+    setTimeout(() => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setSelectedVideo(e.target.result as string);
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
     }, 1000);
   };
 
@@ -252,8 +279,25 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handle comment
-  const handleCommentSubmit = async (postId: string) => {
+  // Handle comment for centered layout
+  const handleCommentSubmit = (postId: string) => {
+    const content = commentInputs[postId]?.trim();
+    if (!content) return;
+
+    // For centered layout: update simplePosts with new comment
+    setSimplePosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? { ...post, comments: post.comments + 1 }
+          : post
+      )
+    );
+    
+    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+  };
+
+  // Handle comment for GraphQL posts
+  const handleGraphQLCommentSubmit = async (postId: string) => {
     const content = commentInputs[postId]?.trim();
     if (!content) return;
 
@@ -267,8 +311,19 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handle repost
-  const handleRepost = async (postId: string) => {
+  // Handle repost for centered layout
+  const handleSimpleRepost = (postId: string) => {
+    setSimplePosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? { ...post, retweets: post.retweets + 1 }
+          : post
+      )
+    );
+  };
+
+  // Handle repost for GraphQL posts
+  const handleGraphQLRepost = async (postId: string) => {
     try {
       const result = await repost({ 
         variables: { 
@@ -279,7 +334,6 @@ const HomePage: React.FC = () => {
       
       console.log('Repost successful:', result);
       
-      // Show success feedback
       if (result.data?.repost) {
         console.log('Post reposted! New repost count:', result.data.repost.reposts);
       }
@@ -294,8 +348,45 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handle share
-  const handleShare = async (postId: string) => {
+  // Handle like for centered layout
+  const handleSimpleLike = (postId: string) => {
+    setSimplePosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId
+          ? { ...post, likes: post.likes + 1 }
+          : post
+      )
+    );
+  };
+
+  // Handle share for centered layout
+  const handleSimpleShare = async (postId: string) => {
+    const post = simplePosts.find(p => p.id === postId);
+    if (!post) return;
+
+    const shareUrl = `${window.location.origin}/post/${postId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Check out this post',
+          text: post.content,
+          url: shareUrl,
+        });
+      } catch (shareError: any) {
+        if (shareError.name !== 'AbortError') {
+          await navigator.clipboard.writeText(shareUrl);
+          alert('Link copied to clipboard!');
+        }
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  // Handle share for GraphQL posts
+  const handleGraphQLShare = async (postId: string) => {
     try {
       const result = await sharePost({ 
         variables: { 
@@ -305,15 +396,10 @@ const HomePage: React.FC = () => {
         } 
       });
 
-      console.log('Share result:', result);
-      
       if (result.data?.sharePost?.success) {
         const shareUrl = result.data.sharePost.shareUrl || 
                          `${window.location.origin}/post/${postId}`;
         
-        console.log('Share URL:', shareUrl);
-        
-        // Try to use Web Share API
         if (navigator.share) {
           try {
             await navigator.share({
@@ -322,15 +408,12 @@ const HomePage: React.FC = () => {
               url: shareUrl,
             });
           } catch (shareError: any) {
-            // User cancelled share - that's okay
             if (shareError.name !== 'AbortError') {
-              // Fallback: copy to clipboard
               await navigator.clipboard.writeText(shareUrl);
               alert('Link copied to clipboard!');
             }
           }
         } else {
-          // Fallback for browsers without Web Share API
           await navigator.clipboard.writeText(shareUrl);
           alert('Link copied to clipboard!');
         }
@@ -338,12 +421,7 @@ const HomePage: React.FC = () => {
         alert('Share failed: ' + (result.data?.sharePost?.message || 'Unknown error'));
       }
     } catch (error: any) {
-      console.error('Share failed details:', {
-        message: error.message,
-        graphQLErrors: error.graphQLErrors,
-        networkError: error.networkError
-      });
-      
+      console.error('Share failed:', error);
       alert(`Share failed: ${error.message}`);
     }
   };
@@ -357,6 +435,30 @@ const HomePage: React.FC = () => {
   const handleEditProfile = () => {
     console.log('Edit profile clicked');
     navigate('/profile/edit');
+  };
+
+  // Handle create post via GraphQL
+  const handleGraphQLCreatePost = async () => {
+    if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
+      alert('Please add content, images, or video');
+      return;
+    }
+
+    try {
+      await createPost({ 
+        variables: { 
+          content: newPostContent,
+          images: selectedImages,
+          video: selectedVideo 
+        } 
+      });
+      
+      setNewPostContent('');
+      setSelectedImages([]);
+      setSelectedVideo(null);
+    } catch (err) {
+      console.error('Post creation failed:', err);
+    }
   };
 
   // Loading states
@@ -397,6 +499,19 @@ const HomePage: React.FC = () => {
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                 />
+                <button 
+                  className="media-btn"
+                  onClick={() => videoInputRef.current?.click()}
+                >
+                  <i className="fas fa-video"></i> Video
+                </button>
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoUpload}
+                  style={{ display: 'none' }}
+                />
                 <button className="media-btn">
                   <i className="fas fa-poll"></i> Poll
                 </button>
@@ -404,33 +519,71 @@ const HomePage: React.FC = () => {
                   <i className="fas fa-smile"></i> Emoji
                 </button>
               </div>
-              <button 
-                className="post-submit-btn"
-                onClick={handleNewPost}
-                disabled={uploading}
-              >
-                {uploading ? 'Posting...' : 'Post'}
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  className="post-submit-btn secondary"
+                  onClick={handleGraphQLCreatePost}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Posting...' : 'Post via GraphQL'}
+                </button>
+                <button 
+                  className="post-submit-btn"
+                  onClick={handleNewPost}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Posting...' : 'Post'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Show selected images */}
+        {/* Show selected media */}
         {selectedImages.length > 0 && (
-          <div className="selected-images">
-            {selectedImages.map((img, index) => (
-              <div key={index} className="image-preview">
-                <img src={img} alt="Preview" />
-                <button
-                  onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
-                  className="remove-image-btn"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+          <div className="selected-media">
+            <h4>Selected Images:</h4>
+            <div className="selected-images">
+              {selectedImages.map((img, index) => (
+                <div key={index} className="image-preview">
+                  <img src={img} alt="Preview" />
+                  <button
+                    onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
+                    className="remove-image-btn"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+        
+        {selectedVideo && (
+          <div className="selected-video">
+            <h4>Selected Video:</h4>
+            <div className="video-preview">
+              <video src={selectedVideo} controls style={{ maxWidth: '100%', borderRadius: '8px' }} />
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="remove-video-btn"
+              >
+                Remove Video
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Generate Sample Posts Button */}
+        <div style={{ margin: '20px 0', textAlign: 'center' }}>
+          <button 
+            onClick={handleGenerateSamplePosts}
+            className="generate-posts-btn"
+            disabled={loadingLocalPosts}
+          >
+            {loadingLocalPosts ? 'Loading...' : 'Generate Sample Posts'}
+          </button>
+        </div>
         
         {/* Posts Feed - Centered */}
         <div className="posts-feed-centered">
@@ -452,26 +605,63 @@ const HomePage: React.FC = () => {
               
               <div className="post-content">
                 <p>{post.content}</p>
-                {post.media && (
-                  <div className="post-media">
-                    <img src={post.media} alt="Post media" />
+                {post.images && post.images.length > 0 && (
+                  <div className="post-images">
+                    {post.images.map((img, index) => (
+                      <img key={index} src={img} alt="Post media" className="post-media" />
+                    ))}
+                  </div>
+                )}
+                {post.video && (
+                  <div className="post-video">
+                    <video src={post.video} controls style={{ width: '100%', borderRadius: '8px' }} />
                   </div>
                 )}
               </div>
               
               <div className="post-engagement">
-                <button className="engagement-btn">
+                <button 
+                  className="engagement-btn"
+                  onClick={() => handleCommentSubmit(post.id)}
+                >
                   <i className="far fa-comment"></i> {post.comments}
                 </button>
-                <button className="engagement-btn">
+                <button 
+                  className="engagement-btn"
+                  onClick={() => handleSimpleRepost(post.id)}
+                >
                   <i className="fas fa-retweet"></i> {post.retweets}
                 </button>
-                <button className="engagement-btn">
+                <button 
+                  className="engagement-btn"
+                  onClick={() => handleSimpleLike(post.id)}
+                >
                   <i className="far fa-heart"></i> {post.likes}
                 </button>
-                <button className="engagement-btn">
+                <button 
+                  className="engagement-btn"
+                  onClick={() => handleSimpleShare(post.id)}
+                >
                   <i className="far fa-share-square"></i>
                 </button>
+              </div>
+
+              {/* Comment Input */}
+              <div className="comment-input-section">
+                <input
+                  type="text"
+                  placeholder="Add a comment..."
+                  value={commentInputs[post.id] || ''}
+                  onChange={(e) => setCommentInputs(prev => ({
+                    ...prev,
+                    [post.id]: e.target.value
+                  }))}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleCommentSubmit(post.id);
+                    }
+                  }}
+                />
               </div>
             </div>
           ))}
@@ -488,11 +678,11 @@ const HomePage: React.FC = () => {
                 <PostComponent 
                   key={post.id} 
                   post={post}
-                  onLike={() => console.log('Like post:', post.id)}
+                  onLike={() => handleSimpleLike(post.id)}
                   onComment={() => console.log('Comment on post:', post.id)}
-                  onRepost={() => console.log('Repost:', post.id)}
-                  onShare={() => console.log('Share post:', post.id)}
-                  onSave={() => console.log('Save post:', post.id)}
+                  onRepost={() => handleSimpleRepost(post.id)}
+                  onShare={() => handleSimpleShare(post.id)}
+                  onSave={() => handleSave(post.id)}
                 />
               ))}
             </div>
@@ -749,7 +939,7 @@ const HomePage: React.FC = () => {
                       <Link 
                         key={index} 
                         to={`/hashtag/${encodeURIComponent(part.substring(1))}`}
-                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
+                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'one'}}
                       >
                         {part}
                       </Link>
@@ -817,12 +1007,9 @@ const HomePage: React.FC = () => {
                   isReposted={post.isReposted}
                   isSaved={post.isSaved}
                   onLike={() => handleLikeClick(post.id)}
-                  onComment={() => {
-                    const input = document.querySelector(`input[data-post-id="${post.id}"]`) as HTMLInputElement;
-                    if (input) input.focus();
-                  }}
-                  onRepost={() => handleRepost(post.id)}
-                  onShare={() => handleShare(post.id)}
+                  onComment={() => handleGraphQLCommentSubmit(post.id)}
+                  onRepost={() => handleGraphQLRepost(post.id)}
+                  onShare={() => handleGraphQLShare(post.id)}
                   onSave={() => handleSave(post.id)}
                 />
               </div>

@@ -249,3 +249,96 @@
   font-size: 18px;
   color: #667eea;
 }
+
+/* Add these to your existing HomePage.css */
+
+.post-submit-btn.secondary {
+  background: #4a5568;
+}
+
+.post-submit-btn.secondary:hover {
+  background: #2d3748;
+}
+
+.selected-media, .selected-video {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.selected-media h4, .selected-video h4 {
+  margin: 0 0 10px 0;
+  color: #2d3748;
+  font-size: 16px;
+}
+
+.video-preview {
+  position: relative;
+}
+
+.remove-video-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.remove-video-btn:hover {
+  background: #c53030;
+}
+
+.generate-posts-btn {
+  padding: 10px 20px;
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.generate-posts-btn:hover {
+  background: #38a169;
+}
+
+.generate-posts-btn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+.post-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.post-video {
+  margin-top: 15px;
+}
+
+.comment-input-section {
+  margin-top: 15px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 15px;
+}
+
+.comment-input-section input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.comment-input-section input:focus {
+  outline: none;
+  border-color: #667eea;
+}
