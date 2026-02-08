@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // ← ADD useEffect import
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -24,6 +24,7 @@ import { ApolloProvider } from '@apollo/client';
 import { client } from './apollo/client';
 import ComposePage from './pages/ComposePage';
 import CenteredLayout from './components/Layout/CenteredLayout';
+import { fixLayoutIssues } from './utils/layoutFix';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -57,6 +58,17 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Fix layout on mount - FIXED: Added useEffect
+  useEffect(() => {
+    fixLayoutIssues();
+    
+    // Fix on route changes
+    const observer = new MutationObserver(fixLayoutIssues);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => observer.disconnect();
+  }, []); // ← This closing bracket was missing
 
   return (
     <ErrorBoundary>

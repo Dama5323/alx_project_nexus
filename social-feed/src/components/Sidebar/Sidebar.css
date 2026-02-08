@@ -1,5 +1,3 @@
-/* Sidebar.css - COMPLETE FIXED VERSION */
-
 .sidebar {
   width: 280px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -11,7 +9,7 @@
   overflow-y: auto;
   padding: 30px 20px;
   box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 100; /* CHANGED from 1000 to 100 to prevent overlap */
 }
 
 /* FIXED User Profile Section */
@@ -113,7 +111,6 @@
   text-overflow: ellipsis;
 }
 
-/* The rest of your CSS remains the same... */
 /* Navigation */
 .sidebar-nav {
   margin-bottom: 25px;
@@ -382,6 +379,7 @@
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     width: 280px;
+    z-index: 1000; /* Higher z-index for mobile overlay */
   }
   
   .sidebar.open {
