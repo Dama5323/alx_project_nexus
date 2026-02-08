@@ -1,24 +1,26 @@
 /* src/pages/HomePage.css */
-
-/* Base container - FIXED */
+/* FIX: Base container */
 .homepage-centered {
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
-  padding: 15px;
+  padding: 20px;
   box-sizing: border-box;
-}
-
-/* Ensure everything stays within screen */
-* {
-  box-sizing: border-box;
-}
-
-body {
   overflow-x: hidden;
 }
 
-/* Create Post Card - FIXED */
+/* FIX: Prevent body overflow */
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+/* FIX: Create Post Card */
 .create-post-centered {
   background: white;
   border-radius: 20px;
@@ -30,23 +32,10 @@ body {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* User Avatar - FIXED */
-.user-avatar img {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-/* Post Input Container - FIXED */
-.post-input-container {
-  flex: 1;
-  min-width: 0; /* Prevents overflow */
-}
-
+/* FIX: Post Input */
 .post-input-container textarea {
   width: 100%;
   border: none;
@@ -57,9 +46,10 @@ body {
   min-height: 60px;
   max-width: 100%;
   overflow-wrap: break-word;
+  box-sizing: border-box;
 }
 
-/* Post Card - FIXED */
+/* FIX: Post Card */
 .post-card-centered {
   background: white;
   border-radius: 20px;
@@ -69,76 +59,10 @@ body {
   max-width: 100%;
   overflow: hidden;
   margin-bottom: 15px;
+  box-sizing: border-box;
 }
 
-/* Post Header - FIXED */
-.post-header {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 15px;
-  gap: 12px;
-  width: 100%;
-}
-
-.post-header img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.post-user-info {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.post-user-info strong {
-  display: block;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.post-user-info span {
-  color: #a0aec0;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-}
-
-/* Post Content - FIXED */
-.post-content {
-  margin-bottom: 15px;
-  width: 100%;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.post-content p {
-  font-size: 15px;
-  line-height: 1.5;
-  color: #2d3748;
-  margin-bottom: 15px;
-  word-break: break-word;
-}
-
-/* Media - FIXED */
-.post-media img {
-  width: 100%;
-  max-height: 400px;
-  border-radius: 12px;
-  margin-top: 10px;
-  object-fit: cover;
-}
-
-/* Engagement Buttons - FIXED */
+/* FIX: Engagement Buttons */
 .post-engagement {
   display: flex;
   justify-content: space-between;
@@ -146,6 +70,7 @@ body {
   border-top: 1px solid #e2e8f0;
   flex-wrap: wrap;
   gap: 5px;
+  width: 100%;
 }
 
 .engagement-btn {
@@ -163,53 +88,46 @@ body {
   flex: 1;
   min-width: 60px;
   justify-content: center;
+  box-sizing: border-box;
 }
 
-/* Media Options - FIXED */
+/* FIX: Media Options */
 .media-options {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+  justify-content: space-between;
 }
 
-.media-btn {
-  background: none;
-  border: none;
-  color: #667eea;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-  flex-shrink: 0;
-}
-
-/* Responsive Design */
+/* FIX: Responsive Design */
 @media (max-width: 768px) {
   .homepage-centered {
-    padding: 10px;
+    padding: 15px;
     max-width: 100%;
+    width: 100vw;
+    box-sizing: border-box;
   }
   
   .create-post-centered {
     padding: 15px;
     flex-direction: column;
+    margin: 0 -15px 15px -15px;
+    width: calc(100% + 30px);
+    border-radius: 0;
+    border-bottom: 1px solid #e2e8f0;
   }
   
   .user-avatar {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   
   .post-actions {
     flex-direction: column;
     gap: 10px;
-  }
-  
-  .media-options {
-    justify-content: center;
+    width: 100%;
   }
   
   .post-submit-btn {
@@ -217,13 +135,89 @@ body {
   }
   
   .engagement-btn {
-    font-size: 12px;
-    padding: 4px 8px;
+    font-size: 13px;
+    padding: 5px 8px;
     min-width: 50px;
   }
   
   .post-card-centered {
     padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 12px;
+  }
+}
+
+/* FIX: Mobile (480px and below) */
+@media (max-width: 480px) {
+  .homepage-centered {
+    padding: 10px;
+    width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  .create-post-centered {
+    padding: 12px;
+    margin: 0 -10px 12px -10px;
+    width: calc(100% + 20px);
+  }
+  
+  .post-card-centered {
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .engagement-btn span {
+    font-size: 12px;
+  }
+  
+  .engagement-btn i {
+    font-size: 14px;
+  }
+  
+  .media-btn {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+  
+  .media-btn span {
+    display: inline;
+  }
+  
+  .post-input-container textarea {
+    font-size: 16px; /* Prevent iOS zoom */
+    min-height: 50px;
+  }
+}
+
+/* FIX: Very small screens (360px and below) */
+@media (max-width: 360px) {
+  .homepage-centered {
+    padding: 8px;
+  }
+  
+  .create-post-centered {
+    padding: 10px;
+    margin: 0 -8px 10px -8px;
+    width: calc(100% + 16px);
+  }
+  
+  .post-card-centered {
+    padding: 10px;
+  }
+  
+  .engagement-btn {
+    min-width: 45px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  
+  .engagement-btn span {
+    font-size: 11px;
+  }
+  
+  .engagement-btn i {
+    font-size: 12px;
   }
   
   .post-user-info strong {
@@ -231,37 +225,39 @@ body {
   }
   
   .post-user-info span {
-    font-size: 12px;
+    font-size: 11px;
   }
 }
 
-@media (max-width: 480px) {
-  .homepage-centered {
-    padding: 8px;
+/* FIX: Prevent text zoom on mobile */
+@supports (-webkit-touch-callout: none) {
+  /* CSS specific to iOS devices */
+  .post-input-container textarea,
+  .post-content p {
+    font-size: 16px;
   }
   
-  .create-post-centered {
-    padding: 12px;
+  input, select, textarea {
+    font-size: 16px !important;
   }
-  
-  .post-card-centered {
-    padding: 12px;
-  }
-  
-  .engagement-btn span {
-    display: none;
-  }
-  
-  .engagement-btn {
-    justify-content: center;
-    padding: 6px;
-  }
-  
-  .media-options {
-    justify-content: space-between;
-  }
-  
-  .media-btn span {
-    display: none;
-  }
+}
+
+/* FIX: Viewport settings for mobile */
+@viewport {
+  width: device-width;
+  zoom: 1.0;
+  max-zoom: 1.0;
+  min-zoom: 1.0;
+  user-zoom: fixed;
+}
+
+/* FIX: Ensure nothing overflows horizontally */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
 }
