@@ -189,22 +189,20 @@ img, video, .post-media {
   position: absolute !important;
 }
 
-/* Hide left sidebar in CenteredLayout */
-.centered-app-container .left-sidebar {
+/* Add to your App.css */
+/* Hide duplicate navigation in CenteredLayout */
+.centered-app-container .main-navigation,
+.centered-app-container .navigation,
+.centered-app-container nav[class*="nav"],
+.centered-app-container header[class*="nav"] {
   display: none !important;
 }
 
-/* Adjust main content to take full width */
-.centered-app-container .centered-main-content {
-  width: 100% !important;
-  max-width: 800px !important;
-  margin: 0 auto !important;
+/* But keep the main navigation from App.tsx */
+.App > .main-navigation {
+  display: block !important;
 }
 
-/* Adjust right sidebar position */
-.centered-app-container .right-sidebar {
-  margin-left: 0 !important;
-}
 /* Override any layout constraints on auth pages */
 .auth-page-container .max-w-6xl.mx-auto.p-4 {
   max-width: 100% !important;
