@@ -3,8 +3,26 @@ import { CREATE_POST, UPDATE_POST, DELETE_POST } from '../graphql/mutations/post
 import { GET_POST, GET_USER_POSTS } from '../graphql/queries/postQueries';
 import { CreatePostInput, UpdatePostInput } from '../types';
 
-export const generateSamplePosts = async () => {
-  const samplePosts = [
+// Update the PostData interface to include images and video
+export interface PostData {
+  id?: string;
+  content: string;
+  timestamp: string;
+  author?: {
+    name: string;
+    username: string;
+    avatar: string;
+  };
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  isLiked?: boolean;
+  images?: string[];
+  video?: string;
+}
+
+export const generateSamplePosts = async (): Promise<PostData[]> => {
+  const samplePosts: PostData[] = [
     {
       id: '1',
       author: {
@@ -54,6 +72,7 @@ export const generateSamplePosts = async () => {
   return samplePosts;
 };
 
+// Use the postService object OR individual functions, not both
 export const postService = {
   async createPost(input: CreatePostInput) {
     const { data } = await client.mutate({
@@ -98,26 +117,54 @@ export const postService = {
   },
 };
 
-// Add this interface at the top
-export interface PostData {
-  id?: string;
-  content: string;
-  timestamp: string;
-  author?: {
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  isLiked?: boolean;
-}
-
-// Add createPost function
+// SINGLE createPost function (choose one approach)
 export const createPost = async (postData: PostData): Promise<PostData> => {
   try {
-    // For now, save to localStorage
+    // Option 1: Use GraphQL mutation (recommended for real backend)
+    const { data } = await client.mutate({
+      mutation: CREATE_POST,
+      variables: { 
+        input: {
+          content: postData.content,
+          // Check your GraphQL schema for required fields
+          images: postData.images || [],
+          video: postData.video || null,
+          timestamp: postData.timestamp || new Date().toISOString()
+        }
+      },
+      refetchQueries: ['GetFeed'],
+    });
+
+    const graphQLPost = (data as any)?.createPost;
+    
+    if (graphQLPost) {
+      // Save to localStorage for immediate UI
+      const newPost: PostData = {
+        id: graphQLPost.id || Date.now().toString(),
+        ...postData,
+        author: postData.author || {
+          name: 'Current User',
+          username: '@currentuser',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'
+        },
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        isLiked: false,
+      };
+
+      const existingPosts = JSON.parse(localStorage.getItem('posts') || '[]');
+      const updatedPosts = [newPost, ...existingPosts];
+      localStorage.setItem('posts', JSON.stringify(updatedPosts));
+      
+      return newPost;
+    } else {
+      throw new Error('Failed to create post via GraphQL');
+    }
+  } catch (error) {
+    console.error('Error creating post via GraphQL:', error);
+    
+    // Fallback: Save to localStorage only
     const newPost: PostData = {
       id: Date.now().toString(),
       ...postData,
@@ -132,21 +179,14 @@ export const createPost = async (postData: PostData): Promise<PostData> => {
       isLiked: false,
     };
 
-    // Get existing posts
     const existingPosts = JSON.parse(localStorage.getItem('posts') || '[]');
     const updatedPosts = [newPost, ...existingPosts];
-    
-    // Save to localStorage
     localStorage.setItem('posts', JSON.stringify(updatedPosts));
     
     return newPost;
-  } catch (error) {
-    console.error('Error creating post:', error);
-    throw error;
   }
 };
 
-// Also add getPosts function if missing
 export const getPosts = async (): Promise<PostData[]> => {
   try {
     // Check localStorage for posts

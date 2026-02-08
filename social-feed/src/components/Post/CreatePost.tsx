@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react';
-import { Image, Smile, Video } from 'lucide-react'; // REMOVED Calendar and MapPin
+import { Image, Smile, Video } from 'lucide-react';
 import { createPost, PostData } from '../../services/postService';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -32,14 +32,15 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
   };
 
   return (
-    <div className="create-post-card">
-      <form onSubmit={handleSubmit}>
-        <div className="post-input-area">
-          <img 
-            src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} 
-            alt="User" 
-            className="user-avatar-small"
-          />
+    <div className="create-post-centered">
+      <div className="user-avatar">
+        <img 
+          src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} 
+          alt="User" 
+        />
+      </div>
+      <div className="post-input-container">
+        <form onSubmit={handleSubmit}>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -47,31 +48,28 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
             rows={3}
             className="post-textarea"
           />
-        </div>
-        
-        <div className="post-actions-row">
-          {/* Keep only essential buttons */}
-          <div className="media-buttons">
-            <button type="button" className="media-btn">
-              <Image size={20} />
-            </button>
-            <button type="button" className="media-btn">
-              <Video size={20} />
-            </button>
-            <button type="button" className="media-btn">
-              <Smile size={20} />
+          <div className="post-actions">
+            <div className="media-options">
+              <button type="button" className="media-btn">
+                <Image size={20} />
+              </button>
+              <button type="button" className="media-btn">
+                <Video size={20} />
+              </button>
+              <button type="button" className="media-btn">
+                <Smile size={20} />
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={!content.trim() || loading}
+              className="post-submit-btn"
+            >
+              {loading ? 'Posting...' : 'Post'}
             </button>
           </div>
-          
-          <button
-            type="submit"
-            disabled={!content.trim() || loading}
-            className="post-btn"
-          >
-            {loading ? 'Posting...' : 'Post'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

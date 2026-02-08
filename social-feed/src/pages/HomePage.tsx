@@ -6,7 +6,7 @@ import { LIKE_POST, UNLIKE_POST } from '../graphql/mutations/reactionMutations';
 import { ADD_COMMENT } from '../graphql/mutations/commentMutations';
 import { REPOST } from '../graphql/mutations/repostMutations';
 import { SHARE_POST } from '../graphql/mutations/shareMutations';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PostActions } from '../components/Post/PostActions';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
@@ -19,7 +19,6 @@ import TrendingSidebar from '../components/trending/TrendingSidebar';
 import CreatePost from '../components/Post/CreatePost';
 import PostComponent from '../components/Post/Post';
 import { getPosts, generateSamplePosts } from '../services/postService';
-//import LinkedInPost from '../components/Post/LinkPost';
 import './HomePage.css';
 
 // Define Post type interface
@@ -95,8 +94,6 @@ const HomePage: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false); 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   
   // Local state for posts (for CreatePost component)
   const [localPosts, setLocalPosts] = useState<PostType[]>([]);
@@ -125,15 +122,30 @@ const HomePage: React.FC = () => {
       video: postData.video,
     };
   };
-  
+
   // Handle delete post for centered layout
   const handleDeletePost = (postId: string) => {
     setSimplePosts(simplePosts.filter(post => post.id !== postId));
   };
 
-  // Handle new post in centered layout
-  const handleNewPost = () => {
-    if (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) {
+  // Handle new post - combines local and GraphQL
+  const handleNewPost = async () => {
+    if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
+      alert('Please add some content');
+      return;
+    }
+
+    try {
+      // Save to GraphQL backend
+      await createPost({ 
+        variables: { 
+          content: newPostContent,
+          images: selectedImages,
+          video: selectedVideo 
+        } 
+      });
+      
+      // Also add to local state for immediate display
       const newPost: SimplePost = {
         id: Date.now().toString(),
         userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
@@ -152,7 +164,52 @@ const HomePage: React.FC = () => {
       setNewPostContent('');
       setSelectedImages([]);
       setSelectedVideo(null);
+      
+      console.log('Post saved to GraphQL backend');
+    } catch (err) {
+      console.error('Failed to save to GraphQL backend:', err);
+      
+      // Fallback: Save locally only
+      const newPost: SimplePost = {
+        id: Date.now().toString(),
+        userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
+        username: user?.name || 'Current User',
+        handle: user?.username || 'currentuser',
+        time: 'just now',
+        content: newPostContent,
+        images: selectedImages,
+        video: selectedVideo || undefined,
+        comments: 0,
+        retweets: 0,
+        likes: 0
+      };
+      
+      setSimplePosts([newPost, ...simplePosts]);
+      setNewPostContent('');
+      setSelectedImages([]);
+      setSelectedVideo(null);
+      
+      alert('Post saved locally (backend connection failed)');
     }
+  };
+
+  // Handle post created from CreatePost component
+  const handlePostCreated = (newPostData: any) => {
+    const newPost: SimplePost = {
+      id: Date.now().toString(),
+      userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
+      username: user?.name || 'Current User',
+      handle: user?.username || 'currentuser',
+      time: 'just now',
+      content: newPostData.content || '',
+      images: newPostData.images || [],
+      video: newPostData.video || undefined,
+      comments: 0,
+      retweets: 0,
+      likes: 0
+    };
+    
+    setSimplePosts([newPost, ...simplePosts]);
   };
 
   // Handle image upload for centered layout
@@ -220,12 +277,6 @@ const HomePage: React.FC = () => {
     
     fetchLocalPosts();
   }, []);
-  
-  // Handle new post created from CreatePost component
-  const handlePostCreated = (newPostData: any) => {
-    const newPost = convertToPostType(newPostData);
-    setLocalPosts([newPost, ...localPosts]);
-  };
   
   // Generate sample posts
   const handleGenerateSamplePosts = async () => {
@@ -436,86 +487,118 @@ const HomePage: React.FC = () => {
     navigate('/profile/edit');
   };
 
-  // Handle create post via GraphQL
-  const handleGraphQLCreatePost = async () => {
-    if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
-      alert('Please add content, images, or video');
-      return;
-    }
-
-    try {
-      await createPost({ 
-        variables: { 
-          content: newPostContent,
-          images: selectedImages,
-          video: selectedVideo 
-        } 
-      });
-      
-      setNewPostContent('');
-      setSelectedImages([]);
-      setSelectedVideo(null);
-    } catch (err) {
-      console.error('Post creation failed:', err);
-    }
-  };
-
   // Loading states
   if (loading) return <div className="loading-screen">Loading...</div>;
 
   // Render single header component
   const renderHeader = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      background: 'white',
-      padding: '15px 20px',
-      borderBottom: '1px solid #eee',
-      zIndex: 1000,
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }}>
-      <h1 style={{ margin: 0, fontSize: '20px' }}>Home</h1>
-      
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+    <div className="fixed-header">
+      <h1>Home</h1>
+      <div className="header-actions">
         {uploading && (
-          <div style={{
-            padding: '4px 12px',
-            background: '#e3f2fd',
-            color: '#1976d2',
-            borderRadius: '20px',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px'
-          }}>
+          <div className="uploading-indicator">
             <span>⏳</span>
             Uploading...
           </div>
         )}
-        
         <NotificationBell />
-        
         {user && (
-          <button 
-            onClick={logout}
-            style={{
-              padding: '8px 16px',
-              background: '#ff4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
+          <button onClick={logout} className="logout-btn">
             Logout
           </button>
         )}
       </div>
+    </div>
+  );
+
+  // Render posts with delete, like, share, repost functionality
+  const renderPosts = () => (
+    <div className="posts-feed-centered">
+      {simplePosts.map((post: SimplePost) => (
+        <div key={post.id} className="post-card-centered">
+          <div className="post-header">
+            <img src={post.userAvatar} alt={post.username} />
+            <div className="post-user-info">
+              <strong>{post.username}</strong>
+              <span>@{post.handle} · {post.time}</span>
+            </div>
+            {/* Delete button - only show for current user's posts */}
+            {(user?.username === post.handle.replace('@', '') || !user) && (
+              <button 
+                className="delete-post-btn"
+                onClick={() => handleDeletePost(post.id)}
+                title="Delete post"
+              >
+                <i className="fas fa-trash"></i>
+              </button>
+            )}
+          </div>
+          
+          <div className="post-content">
+            <p>{post.content}</p>
+            {post.images && post.images.length > 0 && (
+              <div className="post-images">
+                {post.images.map((img: string, index: number) => (
+                  <img key={index} src={img} alt="Post media" className="post-media" />
+                ))}
+              </div>
+            )}
+            {post.video && (
+              <div className="post-video">
+                <video src={post.video} controls />
+              </div>
+            )}
+          </div>
+          
+          <div className="post-engagement">
+            <button 
+              className="engagement-btn"
+              onClick={() => handleCommentSubmit(post.id)}
+            >
+              <i className="far fa-comment"></i> {post.comments}
+            </button>
+            <button 
+              className="engagement-btn"
+              onClick={() => handleSimpleRepost(post.id)}
+              title="Repost"
+            >
+              <i className="fas fa-retweet"></i> {post.retweets}
+            </button>
+            <button 
+              className="engagement-btn"
+              onClick={() => handleSimpleLike(post.id)}
+              title="Like"
+            >
+              <i className="far fa-heart"></i> {post.likes}
+            </button>
+            <button 
+              className="engagement-btn"
+              onClick={() => handleSimpleShare(post.id)}
+              title="Share"
+            >
+              <i className="far fa-share-square"></i>
+            </button>
+          </div>
+
+          {/* Comment Input */}
+          <div className="comment-input-section">
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              value={commentInputs[post.id] || ''}
+              onChange={(e) => setCommentInputs(prev => ({
+                ...prev,
+                [post.id]: e.target.value
+              }))}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleCommentSubmit(post.id);
+                }
+              }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
   
@@ -525,209 +608,107 @@ const HomePage: React.FC = () => {
       <>
         {renderHeader()}
         <div className="homepage-centered" style={{ paddingTop: '80px' }}>
-        {/* Create Post Card - Centered */}
-        <div className="create-post-centered">
-          <div className="user-avatar">
-            <img 
-              src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} 
-              alt="User" 
-            />
-          </div>
-          <div className="post-input-container">
-            <textarea 
-              placeholder="What's happening?"
-              rows={3}
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-            />
-            <div className="post-actions">
-              <div className="media-options">
-                <button 
-                  className="media-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <i className="fas fa-image"></i> Photo/Video
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                />
-                <button 
-                  className="media-btn"
-                  onClick={() => videoInputRef.current?.click()}
-                >
-                  <i className="fas fa-video"></i> Video
-                </button>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={handleVideoUpload}
-                  style={{ display: 'none' }}
-                />
-                <button className="media-btn">
-                  <i className="fas fa-poll"></i> Poll
-                </button>
-                <button className="media-btn">
-                  <i className="fas fa-smile"></i> Emoji
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  className="post-submit-btn secondary"
-                  onClick={handleGraphQLCreatePost}
-                  disabled={uploading}
-                >
-                  {uploading ? 'Posting...' : 'Post via GraphQL'}
-                </button>
+          {/* Custom Create Post Section with Image/Video Upload */}
+          <div className="create-post-centered">
+            <div className="user-avatar">
+              <img 
+                src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} 
+                alt="User" 
+              />
+            </div>
+            <div className="post-input-container">
+              <textarea 
+                placeholder="What's happening?"
+                rows={3}
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                className="post-textarea"
+              />
+              
+              {/* Selected Media Preview */}
+              {selectedImages.length > 0 && (
+                <div className="selected-media-preview">
+                  {selectedImages.map((img, index) => (
+                    <div key={index} className="media-preview-item">
+                      <img src={img} alt="Preview" />
+                      <button 
+                        onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
+                        className="remove-media-btn"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {selectedVideo && (
+                <div className="selected-video-preview">
+                  <video src={selectedVideo} controls className="video-preview" />
+                  <button 
+                    onClick={() => setSelectedVideo(null)}
+                    className="remove-media-btn"
+                  >
+                    Remove Video
+                  </button>
+                </div>
+              )}
+              
+              <div className="post-actions">
+                <div className="media-options">
+                  {/* Image Upload */}
+                  <label className="media-btn" title="Add photo">
+                    <i className="fas fa-image"></i>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  
+                  {/* Video Upload */}
+                  <label className="media-btn" title="Add video">
+                    <i className="fas fa-video"></i>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  
+                  <button className="media-btn" title="Add emoji">
+                    <i className="fas fa-smile"></i>
+                  </button>
+                </div>
                 <button 
                   className="post-submit-btn"
                   onClick={handleNewPost}
-                  disabled={uploading}
+                  disabled={uploading || (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo)}
                 >
                   {uploading ? 'Posting...' : 'Post'}
                 </button>
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Show selected media */}
-        {selectedImages.length > 0 && (
-          <div className="selected-media">
-            <h4>Selected Images:</h4>
-            <div className="selected-images">
-              {selectedImages.map((img: string, index: number) => (
-                <div key={index} className="image-preview">
-                  <img src={img} alt="Preview" />
-                  <button
-                    onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
-                    className="remove-image-btn"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {selectedVideo && (
-          <div className="selected-video">
-            <h4>Selected Video:</h4>
-            <div className="video-preview">
-              <video src={selectedVideo} controls style={{ maxWidth: '100%', borderRadius: '8px' }} />
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="remove-video-btn"
-              >
-                Remove Video
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Generate Sample Posts Button */}
-        <div style={{ margin: '20px 0', textAlign: 'center' }}>
-          <button 
-            onClick={handleGenerateSamplePosts}
-            className="generate-posts-btn"
-            disabled={loadingLocalPosts}
-          >
-            {loadingLocalPosts ? 'Loading...' : 'Generate Sample Posts'}
-          </button>
-        </div>
-        
-        {/* Posts Feed - Centered */}
-        <div className="posts-feed-centered">
-          {simplePosts.map((post: SimplePost) => (
-            <div key={post.id} className="post-card-centered">
-              <div className="post-header">
-                <img src={post.userAvatar} alt={post.username} />
-                <div className="post-user-info">
-                  <strong>{post.username}</strong>
-                  <span>@{post.handle} · {post.time}</span>
-                </div>
-                <button 
-                  className="delete-post-btn"
-                  onClick={() => handleDeletePost(post.id)}
-                >
-                  <i className="fas fa-trash"></i>
-                </button>
-              </div>
-              
-              <div className="post-content">
-                <p>{post.content}</p>
-                {post.images && post.images.length > 0 && (
-                  <div className="post-images">
-                    {post.images.map((img: string, index: number) => (
-                      <img key={index} src={img} alt="Post media" className="post-media" />
-                    ))}
-                  </div>
-                )}
-                {post.video && (
-                  <div className="post-video">
-                    <video src={post.video} controls style={{ width: '100%', borderRadius: '8px' }} />
-                  </div>
-                )}
-              </div>
-              
-              <div className="post-engagement">
-                <button 
-                  className="engagement-btn"
-                  onClick={() => handleCommentSubmit(post.id)}
-                >
-                  <i className="far fa-comment"></i> {post.comments}
-                </button>
-                <button 
-                  className="engagement-btn"
-                  onClick={() => handleSimpleRepost(post.id)}
-                >
-                  <i className="fas fa-retweet"></i> {post.retweets}
-                </button>
-                <button 
-                  className="engagement-btn"
-                  onClick={() => handleSimpleLike(post.id)}
-                >
-                  <i className="far fa-heart"></i> {post.likes}
-                </button>
-                <button 
-                  className="engagement-btn"
-                  onClick={() => handleSimpleShare(post.id)}
-                >
-                  <i className="far fa-share-square"></i>
-                </button>
-              </div>
-
-              {/* Comment Input */}
-              <div className="comment-input-section">
-                <input
-                  type="text"
-                  placeholder="Add a comment..."
-                  value={commentInputs[post.id] || ''}
-                  onChange={(e) => setCommentInputs(prev => ({
-                    ...prev,
-                    [post.id]: e.target.value
-                  }))}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleCommentSubmit(post.id);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Also show original CreatePost component for fallback */}
-        <div className="original-create-post">
-          <CreatePost onPostCreated={handlePostCreated} />
           
+          {/* Generate Sample Posts Button */}
+          <div style={{ margin: '20px 0', textAlign: 'center' }}>
+            <button 
+              onClick={handleGenerateSamplePosts}
+              className="generate-posts-btn"
+              disabled={loadingLocalPosts}
+            >
+              {loadingLocalPosts ? 'Loading...' : 'Generate Sample Posts'}
+            </button>
+          </div>
+          
+          {/* Posts Feed */}
+          {renderPosts()}
+          
+          {/* Also show local posts */}
           {localPosts.length > 0 && (
             <div className="local-posts">
               <h3>Local Posts</h3>
@@ -745,7 +726,6 @@ const HomePage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
       </>
     );
   }
@@ -754,292 +734,191 @@ const HomePage: React.FC = () => {
   return (
     <>
       {renderHeader()}
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto',
-        display: 'flex',
-        gap: '20px',
-        paddingTop: '80px'
-      }}>
-      {/* Left Sidebar - User Info & Navigation */}
-      <div style={{ width: '250px', flexShrink: 0 }}>
-        {user && (
-          <div style={{
-            background: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            marginBottom: '20px'
-          }}>
-            <Link to={`/profile/${user.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
-                <img 
-                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=1d9bf0&color=fff`} 
-                  alt="Profile"
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    marginRight: '12px'
-                  }}
-                />
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '16px' }}>{user.name || user.email}</h3>
-                  <span style={{ color: '#536471', fontSize: '14px' }}>
-                    @{user.username || user.email?.split('@')[0] || 'user'}
-                  </span>
+      <div className="homepage-layout">
+        {/* Left Sidebar - User Info & Navigation */}
+        <div className="left-sidebar">
+          {user && (
+            <div className="user-profile-card">
+              <Link to={`/profile/${user.id}`} className="profile-link">
+                <div className="profile-header">
+                  <img 
+                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}&background=1d9bf0&color=fff`} 
+                    alt="Profile"
+                    className="profile-avatar"
+                  />
+                  <div className="profile-info">
+                    <h3>{user.name || user.email}</h3>
+                    <span className="profile-handle">
+                      @{user.username || user.email?.split('@')[0] || 'user'}
+                    </span>
+                  </div>
                 </div>
+              </Link>
+
+              <div className="profile-links">
+                <Link to="/bookmarks" className="profile-link-item">
+                  <span>🔖</span>
+                  Bookmarks
+                </Link>
+                <Link to="/notifications" className="profile-link-item">
+                  <span>🔔</span>
+                  Notifications
+                </Link>
+                <Link to="/analytics" className="profile-link-item">
+                  <span>📊</span>
+                  Analytics
+                </Link>
               </div>
-            </Link>
-
-            <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              <Link 
-                to="/bookmarks"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  fontSize: '14px'
-                }}
-              >
-                <span>🔖</span>
-                Bookmarks
-              </Link>
-              <Link 
-                to="/notifications"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  fontSize: '14px'
-                }}
-              >
-                <span>🔔</span>
-                Notifications
-              </Link>
-              <Link 
-                to="/analytics"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: '#333',
-                  fontSize: '14px'
-                }}
-              >
-                <span>📊</span>
-                Analytics
-              </Link>
+              
+              {/* Edit Profile Button */}
+              <div className="edit-profile-section">
+                <button 
+                  onClick={handleEditProfile}
+                  className="edit-profile-btn"
+                >
+                  <span>✏️</span>
+                  Edit Profile
+                </button>
+              </div>
             </div>
-            
-            {/* Edit Profile Button */}
-            <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              <button 
-                onClick={handleEditProfile}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: '#f0f2f5',
-                  color: '#333',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
-              >
-                <span>✏️</span>
-                Edit Profile
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content */}
-      <div style={{ flex: 1, maxWidth: '600px' }}>
-        {/* CreatePost component */}
-        <div style={{ marginBottom: '20px' }}>
-          <CreatePost onPostCreated={handlePostCreated} />
+          )}
         </div>
 
-        {/* Display GraphQL Posts */}
-        <div>
-          {posts.map((post: PostType) => (
-            <div key={post.id} style={{
-              borderBottom: '1px solid #eee',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '8px',
-              marginBottom: '15px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              {/* Author */}
-              <div style={{display: 'flex', alignItems: 'flex-start', marginBottom: '15px'}}>
-                <img 
-                  src={post.author.avatar} 
-                  alt={post.author.name}
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    marginRight: '12px',
-                    objectFit: 'cover'
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{fontWeight: 'bold', fontSize: '15px'}}>
-                        {post.author.name}
+        {/* Main Content */}
+        <div className="main-content">
+          {/* CreatePost component */}
+          <div className="create-post-container">
+            <CreatePost onPostCreated={handlePostCreated} />
+          </div>
+
+          {/* Display GraphQL Posts */}
+          <div className="posts-container">
+            {posts.map((post: PostType) => (
+              <div key={post.id} className="post-card">
+                {/* Author */}
+                <div className="post-author">
+                  <img 
+                    src={post.author.avatar} 
+                    alt={post.author.name}
+                    className="author-avatar"
+                  />
+                  <div className="author-info">
+                    <div className="author-header">
+                      <div>
+                        <div className="author-name">{post.author.name}</div>
+                        <div className="author-handle">@{post.author.username}</div>
                       </div>
-                      <div style={{color: '#536471', fontSize: '14px'}}>
-                        @{post.author.username}
+                      
+                      <div className="author-actions">
+                        <FollowButton 
+                          userId={post.author.id}
+                          isFollowing={false}
+                          size="sm"
+                        />
+                        <BookmarkButton 
+                          postId={post.id}
+                          isBookmarked={post.isSaved}
+                          size="sm"
+                        />
                       </div>
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <FollowButton 
-                        userId={post.author.id}
-                        isFollowing={false}
-                        size="sm"
-                      />
-                      <BookmarkButton 
-                        postId={post.id}
-                        isBookmarked={post.isSaved}
-                        size="sm"
-                      />
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Post Content */}
-              <div style={{fontSize: '15px', lineHeight: '1.5', margin: '10px 0'}}>
-                {post.content.split(/(@\w+|#\w+)/).map((part, index) => {
-                  if (part.match(/^@\w+/)) {
-                    return (
-                      <Link 
-                        key={index} 
-                        to={`/profile/${part.substring(1)}`}
-                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
-                      >
-                        {part}
-                      </Link>
-                    );
-                  } else if (part.match(/^#\w+/)) {
-                    return (
-                      <Link 
-                        key={index} 
-                        to={`/hashtag/${encodeURIComponent(part.substring(1))}`}
-                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
-                      >
-                        {part}
-                      </Link>
-                    );
-                  }
-                  return <span key={index}>{part}</span>;
-                })}
-              </div>
-              
-              {/* Images */}
-              {post.images?.map((img: string, i: number) => (
-                <img 
-                  key={i} 
-                  src={img} 
-                  alt="" 
-                  style={{
-                    maxWidth: '100%',
-                    borderRadius: '12px',
-                    marginTop: '10px',
-                    maxHeight: '400px',
-                    objectFit: 'cover'
-                  }} 
-                />
-              ))}
-              
-              {/* Video */}
-              {post.video && (
-                <video 
-                  src={post.video}
-                  controls
-                  style={{
-                    maxWidth: '100%',
-                    borderRadius: '12px',
-                    marginTop: '10px',
-                    maxHeight: '400px'
-                  }}
-                />
-              )}
-              
-              {/* Post Stats */}
-              <div style={{
-                marginTop: '15px',
-                color: '#536471',
-                fontSize: '14px',
-                display: 'flex',
-                gap: '20px',
-                alignItems: 'center'
-              }}>
-                <span>{post.likes} Likes</span>
-                <span>{post.comments?.length || 0} Comments</span>
-                <span>{post.shares} Shares</span>
-                <span>{post.reposts || 0} Reposts</span>
-                <span>{post.views} Views</span>
-              </div>
-              
-              {/* PostActions Component */}
-              <div style={{ marginTop: '15px' }}>
-                <PostActions
-                  postId={post.id}
-                  likes={post.likes}
-                  comments={post.comments?.length || 0}
-                  reposts={post.reposts || 0}
-                  shares={post.shares || 0}
-                  isLiked={post.isLiked}
-                  isReposted={post.isReposted}
-                  isSaved={post.isSaved}
-                  onLike={() => handleLikeClick(post.id)}
-                  onComment={() => handleGraphQLCommentSubmit(post.id)}
-                  onRepost={() => handleGraphQLRepost(post.id)}
-                  onShare={() => handleGraphQLShare(post.id)}
-                  onSave={() => handleSave(post.id)}
-                />
-              </div>
-
-              {/* Post Analytics */}
-              {user?.id === post.author.id && (
-                <div style={{ marginTop: '15px' }}>
-                  <PostAnalytics 
+                
+                {/* Post Content */}
+                <div className="post-content-text">
+                  {post.content.split(/(@\w+|#\w+)/).map((part, index) => {
+                    if (part.match(/^@\w+/)) {
+                      return (
+                        <Link 
+                          key={index} 
+                          to={`/profile/${part.substring(1)}`}
+                          className="post-mention"
+                        >
+                          {part}
+                        </Link>
+                      );
+                    } else if (part.match(/^#\w+/)) {
+                      return (
+                        <Link 
+                          key={index} 
+                          to={`/hashtag/${encodeURIComponent(part.substring(1))}`}
+                          className="post-hashtag"
+                        >
+                          {part}
+                        </Link>
+                      );
+                    }
+                    return <span key={index}>{part}</span>;
+                  })}
+                </div>
+                
+                {/* Images */}
+                {post.images?.map((img: string, i: number) => (
+                  <img 
+                    key={i} 
+                    src={img} 
+                    alt="" 
+                    className="post-image"
+                  />
+                ))}
+                
+                {/* Video */}
+                {post.video && (
+                  <video 
+                    src={post.video}
+                    controls
+                    className="post-video-player"
+                  />
+                )}
+                
+                {/* Post Stats */}
+                <div className="post-stats">
+                  <span>{post.likes} Likes</span>
+                  <span>{post.comments?.length || 0} Comments</span>
+                  <span>{post.shares} Shares</span>
+                  <span>{post.reposts || 0} Reposts</span>
+                  <span>{post.views} Views</span>
+                </div>
+                
+                {/* PostActions Component */}
+                <div className="post-actions-container">
+                  <PostActions
                     postId={post.id}
-                    isOwner={true}
+                    likes={post.likes}
+                    comments={post.comments?.length || 0}
+                    reposts={post.reposts || 0}
+                    shares={post.shares || 0}
+                    isLiked={post.isLiked}
+                    isReposted={post.isReposted}
+                    isSaved={post.isSaved}
+                    onLike={() => handleLikeClick(post.id)}
+                    onComment={() => handleGraphQLCommentSubmit(post.id)}
+                    onRepost={() => handleGraphQLRepost(post.id)}
+                    onShare={() => handleGraphQLShare(post.id)}
+                    onSave={() => handleSave(post.id)}
                   />
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Post Analytics */}
+                {user?.id === post.author.id && (
+                  <div className="post-analytics-container">
+                    <PostAnalytics 
+                      postId={post.id}
+                      isOwner={true}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Sidebar - Trending */}
+        <div className="right-sidebar">
+          <TrendingSidebar />
         </div>
       </div>
-
-      {/* Right Sidebar - Trending */}
-      <div style={{ width: '300px', flexShrink: 0 }}>
-        <TrendingSidebar />
-      </div>
-    </div>
     </>
   );
 };
