@@ -189,19 +189,7 @@ img, video, .post-media {
   position: absolute !important;
 }
 
-/* Add to your App.css */
-/* Hide duplicate navigation in CenteredLayout */
-.centered-app-container .main-navigation,
-.centered-app-container .navigation,
-.centered-app-container nav[class*="nav"],
-.centered-app-container header[class*="nav"] {
-  display: none !important;
-}
 
-/* But keep the main navigation from App.tsx */
-.App > .main-navigation {
-  display: block !important;
-}
 
 /* Override any layout constraints on auth pages */
 .auth-page-container .max-w-6xl.mx-auto.p-4 {
