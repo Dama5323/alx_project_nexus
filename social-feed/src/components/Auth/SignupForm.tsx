@@ -1,146 +1,217 @@
-// src/components/auth/SignupForm.tsx - UPDATED
+// src/components/Auth/AuthPage.tsx (or wherever your AuthPage is)
 import React, { useState } from 'react';
-import { Button } from '../common/Button';
-import { useAuth } from '../../hooks/useAuth';
-import './AuthForms.css';
+import { useAuthContext } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-export const SignupForm: React.FC<{ onSwitchToLogin: () => void }> = ({ onSwitchToLogin }) => {
-  const [name, setName] = useState('');
+const AuthPage: React.FC = () => {
+  const { 
+    login, 
+    signup, 
+    loginWithGoogle, 
+    loginWithLinkedIn,
+    loading,
+    error 
+  } = useAuthContext(); // USE CONTEXT HERE
+  
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [validationError, setValidationError] = useState('');
-  const { signup, loading, error: authError } = useAuth(); // Destructure error
+  const [name, setName] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError('');
-    
-    // Validation
-    if (!name.trim()) {
-      setValidationError('Name is required');
-      return;
+    try {
+      let result;
+      if (isLogin) {
+        result = await login(email, password);
+      } else {
+        result = await signup(name, email, password);
+      }
+      
+      if (result.success) {
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Auth error:', err);
     }
-    
-    if (!email.trim()) {
-      setValidationError('Email is required');
-      return;
+  };
+
+  const handleGoogleLogin = async () => {
+    console.log('Google login clicked');
+    try {
+      const result = await loginWithGoogle();
+      console.log('Google login result:', result);
+      
+      if (result.success) {
+        // The OAuth flow will handle redirect automatically
+      } else {
+        alert(`Google login failed: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
     }
-    
-    if (!password) {
-      setValidationError('Password is required');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setValidationError('Password must be at least 6 characters');
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      setValidationError('Passwords do not match');
-      return;
-    }
-    
-    console.log('Attempting signup...');
-    const result = await signup(name, email, password);
-    
-    if (result.success) {
-      console.log('Signup successful!');
-      // Optionally redirect or show success message
-      alert('Signup successful! You can now login.');
-      onSwitchToLogin(); // Switch to login form
-    } else {
-      console.log('Signup failed:', result.error);
-      setValidationError(result.error || 'Signup failed');
+  };
+
+  const handleLinkedInLogin = async () => {
+    console.log('LinkedIn login clicked');
+    try {
+      const result = await loginWithLinkedIn();
+      console.log('LinkedIn login result:', result);
+      
+      if (!result.success) {
+        alert(result.error);
+      }
+    } catch (err) {
+      console.error('LinkedIn login error:', err);
     }
   };
 
   return (
-    <div className="auth-form">
-      <h2>Create Account</h2>
+    <div style={{
+      maxWidth: '400px',
+      margin: '50px auto',
+      padding: '20px',
+      textAlign: 'center'
+    }}>
+      <h2>Welcome to Social Feed</h2>
+      <p>Sign in to your account</p>
       
-      {(authError || validationError) && (
-        <div className="auth-error">
-          {authError || validationError}
+      {error && (
+        <div style={{
+          background: '#ffebee',
+          color: '#c62828',
+          padding: '10px',
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          {error}
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Full Name</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your full name"
-            required
-            disabled={loading}
-          />
-        </div>
+      {/* Social Login Buttons */}
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '12px',
+            marginBottom: '10px',
+            background: '#4285F4',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          Continue with Google
+        </button>
         
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+        <button
+          onClick={handleLinkedInLogin}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '12px',
+            marginBottom: '10px',
+            background: '#0077B5',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          Continue with LinkedIn
+        </button>
+      </div>
+
+      <div style={{ textAlign: 'center', margin: '20px 0', position: 'relative' }}>
+        <hr style={{ border: 'none', borderTop: '1px solid #ccc' }} />
+        <span style={{ 
+          background: 'white', 
+          padding: '0 10px', 
+          position: 'relative', 
+          top: '-10px' 
+        }}>
+          or
+        </span>
+      </div>
+
+      {/* Email/Password Form */}
+      <form onSubmit={handleEmailLogin}>
+        {!isLogin && (
+          <div style={{ marginBottom: '15px' }}>
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ width: '100%', padding: '10px', fontSize: '16px' }}
+              required={!isLogin}
+            />
+          </div>
+        )}
+        
+        <div style={{ marginBottom: '15px' }}>
           <input
             type="email"
-            id="email"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            style={{ width: '100%', padding: '10px', fontSize: '16px' }}
             required
-            disabled={loading}
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <div style={{ marginBottom: '15px' }}>
           <input
             type="password"
-            id="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password (min. 6 characters)"
+            style={{ width: '100%', padding: '10px', fontSize: '16px' }}
             required
-            disabled={loading}
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm your password"
-            required
-            disabled={loading}
-          />
-        </div>
-        
-        <Button 
-          type="submit" 
-          variant="primary" 
-          isLoading={loading}
+        <button
+          type="submit"
           disabled={loading}
-          className="auth-button"
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: '#1d9bf0',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontSize: '16px'
+          }}
         >
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </Button>
+          {loading ? 'Loading...' : (isLogin ? 'Log In' : 'Sign Up')}
+        </button>
       </form>
-      
-      <div className="auth-switch">
-        Already have an account?{' '}
-        <button 
-          type="button" 
-          onClick={onSwitchToLogin}
-          className="switch-link"
-          disabled={loading}
+
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button
+          onClick={() => setIsLogin(!isLogin)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#1d9bf0',
+            cursor: 'pointer',
+            fontSize: '14px',
+            textDecoration: 'underline'
+          }}
         >
-          Log In
+          {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Log In"}
         </button>
       </div>
     </div>
   );
 };
+
+export default AuthPage;
