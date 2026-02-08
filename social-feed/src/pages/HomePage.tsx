@@ -128,24 +128,9 @@ const HomePage: React.FC = () => {
     setSimplePosts(simplePosts.filter(post => post.id !== postId));
   };
 
-  // Handle new post - combines local and GraphQL
-  const handleNewPost = async () => {
-    if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
-      alert('Please add some content');
-      return;
-    }
-
-    try {
-      // Save to GraphQL backend
-      await createPost({ 
-        variables: { 
-          content: newPostContent,
-          images: selectedImages,
-          video: selectedVideo 
-        } 
-      });
-      
-      // Also add to local state for immediate display
+  // Handle new post in centered layout
+  const handleNewPost = () => {
+    if (newPostContent.trim() || selectedImages.length > 0 || selectedVideo) {
       const newPost: SimplePost = {
         id: Date.now().toString(),
         userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
@@ -164,32 +149,6 @@ const HomePage: React.FC = () => {
       setNewPostContent('');
       setSelectedImages([]);
       setSelectedVideo(null);
-      
-      console.log('Post saved to GraphQL backend');
-    } catch (err) {
-      console.error('Failed to save to GraphQL backend:', err);
-      
-      // Fallback: Save locally only
-      const newPost: SimplePost = {
-        id: Date.now().toString(),
-        userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
-        username: user?.name || 'Current User',
-        handle: user?.username || 'currentuser',
-        time: 'just now',
-        content: newPostContent,
-        images: selectedImages,
-        video: selectedVideo || undefined,
-        comments: 0,
-        retweets: 0,
-        likes: 0
-      };
-      
-      setSimplePosts([newPost, ...simplePosts]);
-      setNewPostContent('');
-      setSelectedImages([]);
-      setSelectedVideo(null);
-      
-      alert('Post saved locally (backend connection failed)');
     }
   };
 
@@ -448,7 +407,7 @@ const HomePage: React.FC = () => {
 
       if (result.data?.sharePost?.success) {
         const shareUrl = result.data.sharePost.shareUrl || 
-                         `${window.location.origin}/post/${postId}`;
+                        `${window.location.origin}/post/${postId}`;
         
         if (navigator.share) {
           try {
@@ -474,21 +433,44 @@ const HomePage: React.FC = () => {
       console.error('Share failed:', error);
       alert(`Share failed: ${error.message}`);
     }
-  };
-
+};
   // Handle save
-  const handleSave = async (postId: string) => {
-    console.log('Save post:', postId);
-  };
+const handleSave = async (postId: string) => {
+  console.log('Save post:', postId);
+};
 
-  // Handle profile edit navigation
-  const handleEditProfile = () => {
-    console.log('Edit profile clicked');
-    navigate('/profile/edit');
-  };
+// Handle profile edit navigation
+const handleEditProfile = () => {
+  console.log('Edit profile clicked');
+  navigate('/profile/edit');
+};
 
-  // Loading states
-  if (loading) return <div className="loading-screen">Loading...</div>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _handleGraphQLCreatePost = async () => {
+  if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
+    alert('Please add content, images, or video');
+    return;
+  }
+
+  try {
+    await createPost({ 
+      variables: { 
+        content: newPostContent,
+        images: selectedImages,
+        video: selectedVideo 
+      } 
+    });
+    
+    setNewPostContent('');
+    setSelectedImages([]);
+    setSelectedVideo(null);
+  } catch (err) {
+    console.error('Post creation failed:', err);
+  }
+};
+
+// Loading states
+if (loading) return <div className="loading-screen">Loading...</div>;
 
   // Render single header component
   const renderHeader = () => (
