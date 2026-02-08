@@ -18,7 +18,7 @@ import TrendingPage from './pages/TrendingPage';
 import HashtagPage from './pages/HashtagPage';
 import MessagesPage from './pages/MessagesPage';
 import SearchPage from './pages/SearchPage';
-import Sidebar from './components/Sidebar/Sidebar';
+// import Sidebar from './components/Sidebar/Sidebar';
 import MobileMenu from './components/Sidebar/MobileMenu'; 
 import { ApolloProvider } from '@apollo/client';
 import { client } from './apollo/client';
@@ -90,26 +90,7 @@ function App() {
                 
                 {/* Main App Layout */}
                 <div className="app-container">
-                  {/* Desktop Sidebar */}
-                  <div className="hidden md:block">
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <button 
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        style={{
-                          padding: '8px',
-                          background: '#f0f2f5',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          marginRight: '10px'
-                        }}
-                      >
-                        {sidebarOpen ? '◀ Hide' : '▶ Show'} Sidebar
-                      </button>
-                      <Sidebar />
-                    </div>
-                  </div>
-                  
+                
                   {/* Main Content Area - Using CenteredLayout */}
                   <main className={`flex-1 overflow-y-auto transition-all duration-300 ${
                     sidebarOpen ? 'md:ml-64 lg:ml-80' : 'md:ml-0'
