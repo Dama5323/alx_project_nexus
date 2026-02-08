@@ -87,7 +87,7 @@ const CenteredLayout: React.FC<CenteredLayoutProps> = ({
               <h3>Who to follow</h3>
               <div className="follow-list">
                 <div className="follow-item">
-                  <img src="https://res.cloudinary.com/dzyqof9it/image/upload/v1770481206/ava2_dvty1g.jpg" alt="G" />
+                  <img src="https://res.cloudinary.com/dzyqof9it/image/upload/v1770481206/ava2_dvty1g.jpg" alt="Aditya" />
                   <div className="follow-info">
                     <div className="follow-name">Aditya</div>
                     <div className="follow-handle">@aditya</div>
