@@ -1,6 +1,7 @@
 import React, { useState, FormEvent } from 'react';
-import { Image, Smile, Video, Calendar, MapPin } from 'lucide-react';
+import { Image, Smile, Video } from 'lucide-react'; // REMOVED Calendar and MapPin
 import { createPost, PostData } from '../../services/postService';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CreatePostProps {
   onPostCreated: (post: PostData) => void;
@@ -9,6 +10,7 @@ interface CreatePostProps {
 const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const { user } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,39 +32,41 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-4">
+    <div className="create-post-card">
       <form onSubmit={handleSubmit}>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="What's happening?"
-          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
-          rows={3}
-        />
+        <div className="post-input-area">
+          <img 
+            src={user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'} 
+            alt="User" 
+            className="user-avatar-small"
+          />
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="What's happening?"
+            rows={3}
+            className="post-textarea"
+          />
+        </div>
         
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex space-x-3">
-            <button type="button" className="text-blue-500 hover:bg-blue-50 p-2 rounded-full">
+        <div className="post-actions-row">
+          {/* Keep only essential buttons */}
+          <div className="media-buttons">
+            <button type="button" className="media-btn">
               <Image size={20} />
             </button>
-            <button type="button" className="text-green-500 hover:bg-green-50 p-2 rounded-full">
+            <button type="button" className="media-btn">
               <Video size={20} />
             </button>
-            <button type="button" className="text-yellow-500 hover:bg-yellow-50 p-2 rounded-full">
+            <button type="button" className="media-btn">
               <Smile size={20} />
-            </button>
-            <button type="button" className="text-purple-500 hover:bg-purple-50 p-2 rounded-full">
-              <Calendar size={20} />
-            </button>
-            <button type="button" className="text-red-500 hover:bg-red-50 p-2 rounded-full">
-              <MapPin size={20} />
             </button>
           </div>
           
           <button
             type="submit"
             disabled={!content.trim() || loading}
-            className="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="post-btn"
           >
             {loading ? 'Posting...' : 'Post'}
           </button>

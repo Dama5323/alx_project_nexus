@@ -19,6 +19,7 @@ import TrendingSidebar from '../components/trending/TrendingSidebar';
 import CreatePost from '../components/Post/CreatePost';
 import PostComponent from '../components/Post/Post';
 import { getPosts, generateSamplePosts } from '../services/postService';
+//import LinkedInPost from '../components/Post/LinkPost';
 import './HomePage.css';
 
 // Define Post type interface
@@ -64,9 +65,9 @@ const HomePage: React.FC = () => {
   const [simplePosts, setSimplePosts] = useState<SimplePost[]>([
     {
       id: '1',
-      userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=User1',
-      username: 'Current User',
-      handle: 'currentuser',
+      userAvatar: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770419352/ava_ivuuzq.webp',
+      username: 'Ivy Wanjiru',
+      handle: '@ivywanjiru',
       time: '2 min ago',
       content: 'Hello World! This is my first post on the new centered layout.',
       comments: 5,
@@ -75,12 +76,12 @@ const HomePage: React.FC = () => {
     },
     {
       id: '2',
-      userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=User2',
+      userAvatar: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770481206/ava2_dvty1g.jpg',
       username: 'React Developer',
       handle: 'reactdev',
       time: '1 hour ago',
       content: 'Just finished implementing the new centered layout! What do you think?',
-      media: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=300&fit=crop',
+      media: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770517289/sm_nexus_co2pr7.png',
       comments: 12,
       retweets: 8,
       likes: 45
@@ -110,7 +111,7 @@ const HomePage: React.FC = () => {
         id: '1',
         name: 'Current User',
         username: '@currentuser',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=User'
+        avatar: 'https://res.cloudinary.com/dzyqof9it/image/upload/v1770481206/ava2_dvty1g.jpg'
       },
       likes: postData.likes || 0,
       comments: postData.comments || [],
@@ -158,7 +159,6 @@ const HomePage: React.FC = () => {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-
     setUploading(true);
     
     // Simulate upload - in production, you would upload to a server
@@ -188,7 +188,6 @@ const HomePage: React.FC = () => {
     
     const file = files[0];
     if (!file) return;
-
     setUploading(true);
     
     // Simulate upload
@@ -463,11 +462,69 @@ const HomePage: React.FC = () => {
 
   // Loading states
   if (loading) return <div className="loading-screen">Loading...</div>;
+
+  // Render single header component
+  const renderHeader = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      background: 'white',
+      padding: '15px 20px',
+      borderBottom: '1px solid #eee',
+      zIndex: 1000,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ margin: 0, fontSize: '20px' }}>Home</h1>
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        {uploading && (
+          <div style={{
+            padding: '4px 12px',
+            background: '#e3f2fd',
+            color: '#1976d2',
+            borderRadius: '20px',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px'
+          }}>
+            <span>⏳</span>
+            Uploading...
+          </div>
+        )}
+        
+        <NotificationBell />
+        
+        {user && (
+          <button 
+            onClick={logout}
+            style={{
+              padding: '8px 16px',
+              background: '#ff4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Logout
+          </button>
+        )}
+      </div>
+    </div>
+  );
   
   // Show centered layout when GraphQL fails or returns no posts
   if (error || posts.length === 0) {
     return (
-      <div className="homepage-centered">
+      <>
+        {renderHeader()}
+        <div className="homepage-centered" style={{ paddingTop: '80px' }}>
         {/* Create Post Card - Centered */}
         <div className="create-post-centered">
           <div className="user-avatar">
@@ -544,7 +601,7 @@ const HomePage: React.FC = () => {
           <div className="selected-media">
             <h4>Selected Images:</h4>
             <div className="selected-images">
-              {selectedImages.map((img, index) => (
+              {selectedImages.map((img: string, index: number) => (
                 <div key={index} className="image-preview">
                   <img src={img} alt="Preview" />
                   <button
@@ -587,7 +644,7 @@ const HomePage: React.FC = () => {
         
         {/* Posts Feed - Centered */}
         <div className="posts-feed-centered">
-          {simplePosts.map(post => (
+          {simplePosts.map((post: SimplePost) => (
             <div key={post.id} className="post-card-centered">
               <div className="post-header">
                 <img src={post.userAvatar} alt={post.username} />
@@ -607,7 +664,7 @@ const HomePage: React.FC = () => {
                 <p>{post.content}</p>
                 {post.images && post.images.length > 0 && (
                   <div className="post-images">
-                    {post.images.map((img, index) => (
+                    {post.images.map((img: string, index: number) => (
                       <img key={index} src={img} alt="Post media" className="post-media" />
                     ))}
                   </div>
@@ -689,18 +746,21 @@ const HomePage: React.FC = () => {
           )}
         </div>
       </div>
+      </>
     );
   }
 
   // Original layout when GraphQL works
   return (
-    <div style={{ 
-      maxWidth: '1200px', 
-      margin: '0 auto',
-      display: 'flex',
-      gap: '20px',
-      paddingTop: '80px'
-    }}>
+    <>
+      {renderHeader()}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto',
+        display: 'flex',
+        gap: '20px',
+        paddingTop: '80px'
+      }}>
       {/* Left Sidebar - User Info & Navigation */}
       <div style={{ width: '250px', flexShrink: 0 }}>
         {user && (
@@ -732,6 +792,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
             </Link>
+
             <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
               <Link 
                 to="/bookmarks"
@@ -811,60 +872,6 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1, maxWidth: '600px' }}>
-        {/* Top Bar */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          background: 'white',
-          padding: '15px 20px',
-          borderBottom: '1px solid #eee',
-          zIndex: 1000,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h1 style={{ margin: 0, fontSize: '20px' }}>Home</h1>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {uploading && (
-              <div style={{
-                padding: '4px 12px',
-                background: '#e3f2fd',
-                color: '#1976d2',
-                borderRadius: '20px',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}>
-                <span>⏳</span>
-                Uploading...
-              </div>
-            )}
-            
-            <NotificationBell />
-            
-            {user && (
-              <button 
-                onClick={logout}
-                style={{
-                  padding: '8px 16px',
-                  background: '#ff4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Logout
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* CreatePost component */}
         <div style={{ marginBottom: '20px' }}>
           <CreatePost onPostCreated={handlePostCreated} />
@@ -939,7 +946,7 @@ const HomePage: React.FC = () => {
                       <Link 
                         key={index} 
                         to={`/hashtag/${encodeURIComponent(part.substring(1))}`}
-                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'one'}}
+                        style={{color: '#1d9bf0', fontWeight: '500', textDecoration: 'none'}}
                       >
                         {part}
                       </Link>
@@ -1033,6 +1040,7 @@ const HomePage: React.FC = () => {
         <TrendingSidebar />
       </div>
     </div>
+    </>
   );
 };
 
