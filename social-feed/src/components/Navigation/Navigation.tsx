@@ -50,11 +50,11 @@ const Navigation: React.FC = () => {
           <div className="user-dropdown">
             <button className="user-toggle">
               <img 
-                src="https://via.placeholder.com/32" 
+                src="https://res.cloudinary.com/dzyqof9it/image/upload/v1758428111/profile/a9aie0pfuowrmmix3sc0.jpg" 
                 alt="Profile" 
                 className="user-avatar"
               />
-              <span className="user-name">Your Name</span>
+              <span className="user-name">Damaris Chege</span>
               <i className="fas fa-chevron-down"></i>
             </button>
             

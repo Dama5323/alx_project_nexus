@@ -1,5 +1,6 @@
+// src/components/Layout/CenteredLayout.tsx - UPDATED
 import React from 'react';
-import Navigation from '../Navigation/Navigation'; // ← Add this import
+import Navigation from '../Navigation/Navigation'; // Keep this
 import './CenteredLayout.css';
 
 interface CenteredLayoutProps {
@@ -13,23 +14,22 @@ const CenteredLayout: React.FC<CenteredLayoutProps> = ({
 }) => {
   return (
     <div className="centered-app-container">
-      {/* LinkedIn-style Navigation Header */}
+      {/* Only ONE Navigation header */}
       <Navigation />
       
-      {/* Main Content with Padding for Fixed Header */}
       <div className="layout-content">
-        {/* LEFT SIDEBAR - Remove or keep minimal */}
+        {/* LEFT SIDEBAR - Only if showSidebars is true */}
         {showSidebars && (
           <aside className="left-sidebar">
-            {/* Profile Summary */}
+            {/* Profile Card */}
             <div className="profile-card">
               <img 
-                src="https://via.placeholder.com/80" 
-                alt="Your Name" 
+                src="https://res.cloudinary.com/dzyqof9it/image/upload/v1758428111/profile/a9aie0pfuowrmmix3sc0.jpg" 
+                alt="Damaris Chege" 
                 className="profile-avatar"
               />
-              <h3 className="profile-name">Your Name</h3>
-              <p className="profile-handle">@yourhandle</p>
+              <h3 className="profile-name">Damaris Chege</h3>
+              <p className="profile-handle">@damarischege</p>
               <div className="profile-stats">
                 <div className="stat">
                   <span className="stat-number">245</span>
@@ -42,11 +42,10 @@ const CenteredLayout: React.FC<CenteredLayoutProps> = ({
               </div>
             </div>
             
-            {/* Trending Tags */}
+            {/* Trending Tags - MINIMAL */}
             <div className="trending-tags">
               <h4>Trending Tags</h4>
               <div className="tag-list">
-                <a href="/hashtag/technology" className="tag">#Technology</a>
                 <a href="/hashtag/design" className="tag">#Design</a>
                 <a href="/hashtag/reactjs" className="tag">#ReactJS</a>
                 <a href="/hashtag/webdev" className="tag">#WebDev</a>
@@ -55,32 +54,20 @@ const CenteredLayout: React.FC<CenteredLayoutProps> = ({
           </aside>
         )}
         
-        {/* MAIN CONTENT */}
+        {/* MAIN CONTENT - LinkedIn-style posts */}
         <main className="centered-main-content">
           {children}
         </main>
         
-        {/* RIGHT SIDEBAR */}
+        {/* RIGHT SIDEBAR - Only if showSidebars is true */}
         {showSidebars && (
           <aside className="right-sidebar">
-            {/* Search */}
-            <div className="search-container">
-              <input 
-                type="text" 
-                placeholder="Search for friends, posts..." 
-                className="search-input"
-              />
-            </div>
+            {/* Search - REMOVED since Navigation has search */}
             
             {/* Trending Topics */}
             <div className="trending-topics">
               <h3>Trending for you</h3>
               <div className="topics-list">
-                <div className="topic">
-                  <span className="topic-category">Technology</span>
-                  <span className="topic-name">#Technology</span>
-                  <span className="topic-count">12.5k posts</span>
-                </div>
                 <div className="topic">
                   <span className="topic-category">Design</span>
                   <span className="topic-name">#Design</span>
@@ -100,7 +87,7 @@ const CenteredLayout: React.FC<CenteredLayoutProps> = ({
               <h3>Who to follow</h3>
               <div className="follow-list">
                 <div className="follow-item">
-                  <img src="https://via.placeholder.com/40" alt="User" />
+                  <img src="https://res.cloudinary.com/dzyqof9it/image/upload/v1770481206/ava2_dvty1g.jpg" alt="Aditya" />
                   <div className="follow-info">
                     <div className="follow-name">Aditya</div>
                     <div className="follow-handle">@aditya</div>
