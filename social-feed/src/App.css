@@ -117,16 +117,7 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.6;
 }
 
-/* FIX: Content visibility and overflow */
-.centered-main-content,
-.homepage-centered,
-.profile-container,
-.post-card-centered {
-  overflow: visible !important;
-  max-width: 100% !important;
-  position: relative;
-  z-index: 1;
-}
+
 
 /* FIX: Images and media */
 img, video, .post-media {
