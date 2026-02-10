@@ -1,0 +1,103 @@
+/* src/styles/zoom-fixes.global.css */
+/* GLOBAL ZOOM FIXES */
+
+/* 1. Reset all fixed widths to be responsive */
+*[class*="width-"],
+*[style*="width:"]:not([style*="width: 100"]):not([style*="width: auto"]) {
+  max-width: 100% !important;
+}
+
+/* 2. Force responsive containers */
+.container,
+.wrapper,
+.main-container,
+.content-wrapper {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+/* 3. Fix grid and flex layouts on zoom */
+.grid,
+.flex,
+.layout {
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
+}
+
+/* 4. Text overflow prevention */
+.text-container,
+.post-content,
+.comment-text,
+.user-name,
+.profile-name {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* 5. Table and data display fixes */
+table,
+.data-grid,
+.chart-container {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  display: block !important;
+}
+
+/* 6. Modal and popup zoom fixes */
+.modal,
+.popup,
+.dropdown,
+.tooltip {
+  max-width: 90vw !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* 7. Form element fixes */
+input,
+textarea,
+select {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 8. Zoom-specific media queries */
+/* When zoomed out (50%) */
+@media (min-width: 1920px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    max-width: 120rem !important; /* 1920px */
+  }
+}
+
+/* When zoomed in (200%) */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+/* 9. Safe area insets for modern browsers */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* 10. Print styles (zoom often triggers print preview) */
+@media print {
+  body {
+    zoom: 100% !important;
+    transform: scale(1) !important;
+  }
+}

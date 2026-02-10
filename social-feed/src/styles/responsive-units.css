@@ -1,0 +1,70 @@
+/* src/styles/responsive-units.css */
+/* RESPONSIVE UNITS SYSTEM */
+
+:root {
+  /* Base scaling unit - changes with zoom */
+  --unit: 0.25rem; /* 4px at 16px base */
+  
+  /* Spacing scale */
+  --space-xs: calc(var(--unit) * 1);   /* 4px */
+  --space-sm: calc(var(--unit) * 2);   /* 8px */
+  --space-md: calc(var(--unit) * 4);   /* 16px */
+  --space-lg: calc(var(--unit) * 6);   /* 24px */
+  --space-xl: calc(var(--unit) * 8);   /* 32px */
+  --space-2xl: calc(var(--unit) * 12); /* 48px */
+  
+  /* Layout widths - responsive */
+  --sidebar-width: min(280px, 20vw);
+  --content-max: min(680px, 65vw);
+  --container-max: min(1400px, 90vw);
+  
+  /* Navigation */
+  --nav-height: 4.6875rem; /* 75px, but in rem */
+  
+  /* Breakpoints in rem (scale with zoom) */
+  --bp-mobile: 48rem;   /* 768px */
+  --bp-tablet: 64rem;   /* 1024px */
+  --bp-desktop: 80rem;  /* 1280px */
+  --bp-wide: 100rem;    /* 1600px */
+}
+
+/* Zoom-aware media queries */
+@media (max-width: 48rem) { /* --bp-mobile */
+  :root {
+    --unit: 0.2rem;
+    --sidebar-width: 0;
+  }
+}
+
+@media (min-width: 100rem) { /* --bp-wide (zoomed out) */
+  :root {
+    --container-max: 120rem;
+  }
+}
+
+/* Force zoom consistency */
+@media (max-width: 30rem) { /* Very narrow - high zoom */
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 120rem) { /* Very wide - low zoom */
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Apply to your layout */
+.layout-content {
+  max-width: var(--container-max);
+  gap: var(--space-lg);
+}
+
+.centered-main-content {
+  max-width: var(--content-max);
+}
+
+.left-sidebar {
+  width: var(--sidebar-width);
+}

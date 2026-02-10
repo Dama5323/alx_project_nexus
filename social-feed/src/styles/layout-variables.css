@@ -1,0 +1,46 @@
+:root {
+  /* Define core dimensions */
+  --nav-height: 70px;
+  --sidebar-left-width: 280px;
+  --sidebar-right-width: 320px;
+  --content-max-width: 1280px;
+  --grid-gap: 24px;
+
+  /* Z-index management */
+  --z-nav: 1000;
+  --z-sidebar: 100;
+}
+
+/* Global Reset to prevent 'shoveling' */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* This is the ultimate fix for the horizontal scroll */
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
+/* Force images to stay inside their containers */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* This utility forces the center to shrink before it pushes the sidebar */
+.flex-layout-fix {
+  display: flex !important;
+  width: 100% !important;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  gap: var(--grid-gap);
+}
+
+.flex-center-column {
+  flex: 1 1 0%; /* Grow, Shrink, Basis 0 */
+  min-width: 0;  /* Key fix for zoom/overflow */
+}

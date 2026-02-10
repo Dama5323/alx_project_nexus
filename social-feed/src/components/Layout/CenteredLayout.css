@@ -1,137 +1,77 @@
-/* Add to CenteredLayout.css */
-.left-sidebar {
-  background: white;
-  border-radius: 20px;
+/* The main wrapper that CenteredLayout.tsx uses */
+.layout-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+/* The actual 3-column grid */
+.layout-content {
+  display: grid;
+  /* Left: 280px | Center: Flexible | Right: 320px */
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  gap: 24px;
+  width: 100%;
+  max-width: 1280px; /* Limits the width on giant monitors */
+  margin: 0 auto;
   padding: 20px;
-  position: sticky;
-  top: 20px;
-  height: fit-content;
+  box-sizing: border-box;
+  align-items: start;
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 30px;
-  color: #667eea;
-}
-
-.main-nav {
+/* Ensures the center column doesn't "blow out" the grid width */
+.centered-main-content {
+  width: 100%;
+  min-width: 0; 
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
 }
 
-.nav-item {
+/* Sidebar behavior - Sticky and responsive */
+.left-sidebar, .right-sidebar {
+  position: sticky;
+  top: 95px; /* Adjust based on your Nav height + margin */
+  height: fit-content;
   display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 12px 15px;
-  border-radius: 12px;
-  text-decoration: none;
-  color: #333;
-  transition: all 0.3s ease;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.nav-item:hover,
-.nav-item.active {
-  background: #f0f2f5;
+/* --- Responsive Breakpoints --- */
+
+/* Standard Laptops / Small Desktops */
+@media (max-width: 1200px) {
+  .layout-content {
+    grid-template-columns: 260px minmax(0, 1fr) 300px;
+    gap: 16px;
+    padding: 15px;
+  }
 }
 
-.nav-item i {
-  width: 20px;
-  text-align: center;
+/* Tablets Landscape: Hide Right Sidebar */
+@media (max-width: 1024px) {
+  .layout-content {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .right-sidebar {
+    display: none; /* Right sidebar disappears to save space */
+  }
 }
 
-.create-post-btn {
-  background: #667eea;
-  color: white;
-  padding: 15px;
-  border-radius: 12px;
-  text-decoration: none;
-  text-align: center;
-  margin: 20px 0;
-  font-weight: bold;
-}
+/* Tablets Portrait / Mobile: Single Column */
+@media (max-width: 768px) {
+  .layout-content {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    margin-top: 60px; /* Space for mobile nav */
+  }
 
-.profile-section {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.user-info {
-  flex: 1;
-}
-
-.user-name {
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.user-handle {
-  color: #718096;
-  font-size: 12px;
-}
-
-/* Right sidebar styles */
-.right-sidebar {
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 25px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 20px;
-}
-
-.trending-section h3,
-.who-to-follow h3 {
-  font-size: 18px;
-  margin-bottom: 15px;
-}
-
-.trending-item {
-  padding: 12px 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.trending-category {
-  font-size: 12px;
-  color: #718096;
-  display: block;
-}
-
-.trending-tag {
-  font-weight: bold;
-  display: block;
-}
-
-.trending-count {
-  font-size: 12px;
-  color: #718096;
-  display: block;
-}
-
-.show-more {
-  color: #667eea;
-  text-decoration: none;
-  display: block;
-  padding: 10px 0;
+  .left-sidebar {
+    display: none; /* Hide left sidebar on mobile */
+  }
+  
+  .centered-main-content {
+    max-width: 100%;
+  }
 }

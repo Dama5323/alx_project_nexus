@@ -14,69 +14,94 @@ const Navigation: React.FC = () => {
   ];
 
   return (
-    <header className="main-navigation">
-      <div className="nav-container">
-        {/* Logo */}
-        <div className="nav-logo">
-          <NavLink to="/" className="logo-link">
-            <span className="logo-text">Nexus</span>
-          </NavLink>
-        </div>
-
-        {/* Main Navigation */}
-        <nav className="nav-menu">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => 
-                `nav-item ${isActive ? 'active' : ''}`
-              }
-            >
-              <i className={item.icon}></i>
-              <span className="nav-label">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Right Side: Create Post Button & Profile */}
-        <div className="nav-right">
-          <NavLink to="/compose" className="create-post-btn">
-            <i className="fas fa-feather-alt"></i>
-            <span>Create Post</span>
-          </NavLink>
+    <>
+      {/* DESKTOP NAVIGATION */}
+      <header className="main-navigation desktop-only">
+        <div className="nav-container">
           
-          {/* User Profile Dropdown */}
-          <div className="user-dropdown">
-            <button className="user-toggle">
-              <img 
-                src="https://res.cloudinary.com/dzyqof9it/image/upload/v1758428111/profile/a9aie0pfuowrmmix3sc0.jpg" 
-                alt="Profile" 
-                className="user-avatar"
+          {/* LEFT: Logo & Search Group */}
+          <div className="nav-left-group">
+            <NavLink to="/" className="logo-link">
+              <span className="logo-text">Nexus</span>
+            </NavLink>
+
+            <div className="nav-search-container">
+              <i className="fas fa-search search-icon"></i>
+              <input 
+                type="text" 
+                placeholder="Search Nexus..." 
+                className="nav-search-input" 
               />
-              <span className="user-name">Damaris Chege</span>
-              <i className="fas fa-chevron-down"></i>
-            </button>
+            </div>
+          </div>
+
+          {/* CENTER: Desktop Navigation Links */}
+          <nav className="nav-menu desktop-only">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => 
+                  `nav-item ${isActive ? 'active' : ''}`
+                }
+              >
+                <i className={item.icon}></i>
+                <span className="nav-label">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* RIGHT: Actions & Profile Dropdown */}
+          <div className="nav-right">
+            <NavLink to="/compose" className="create-post-btn mobile-hide">
+              Create Post
+            </NavLink>
             
-            <div className="dropdown-menu">
-              <NavLink to="/profile" className="dropdown-item">
-                <i className="fas fa-user"></i> Your Profile
-              </NavLink>
-              <NavLink to="/settings" className="dropdown-item">
-                <i className="fas fa-cog"></i> Settings
-              </NavLink>
-              <NavLink to="/help" className="dropdown-item">
-                <i className="fas fa-question-circle"></i> Help & Support
-              </NavLink>
-              <div className="dropdown-divider"></div>
-              <button className="dropdown-item logout-btn">
-                <i className="fas fa-sign-out-alt"></i> Logout
+            <div className="user-dropdown">
+              <button className="user-toggle">
+                <img 
+                  src="https://res.cloudinary.com/dzyqof9it/image/upload/v1758428111/profile/a9aie0pfuowrmmix3sc0.jpg" 
+                  alt="Profile" 
+                  className="user-avatar"
+                />
+                <span className="user-name">Damaris Chege</span>
+                <i className="fas fa-chevron-down"></i>
               </button>
+              
+              <div className="dropdown-menu">
+                <NavLink to="/profile" className="dropdown-item">
+                  <i className="fas fa-user"></i> Your Profile
+                </NavLink>
+                <NavLink to="/settings" className="dropdown-item">
+                  <i className="fas fa-cog"></i> Settings
+                </NavLink>
+                <NavLink to="/help" className="dropdown-item">
+                  <i className="fas fa-question-circle"></i> Help & Support
+                </NavLink>
+                <div className="dropdown-divider"></div>
+                <button className="dropdown-item logout-btn">
+                  <i className="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* MOBILE BOTTOM TAB BAR */}
+      <nav className="mobile-bottom-nav mobile-only">
+        {navItems.slice(0, 5).map((item) => (
+          <NavLink 
+            key={item.path} 
+            to={item.path} 
+            className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+          >
+            <i className={item.icon}></i>
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </>
   );
 };
 

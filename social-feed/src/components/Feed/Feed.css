@@ -1,5 +1,7 @@
 .feed {
-  max-width: 600px;
+  width: 100%;
+  max-width: 100%; /* Let the layout-content grid decide the width */
+  min-width: 0;
   margin: 0 auto;
   background: white;
   min-height: 100vh;

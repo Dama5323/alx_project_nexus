@@ -1,0 +1,49 @@
+/* zoom-fix.css - Force responsive behavior */
+
+/* Convert all fixed widths to max-widths */
+[class*="px"] {
+  max-width: 100% !important;
+}
+
+/* Sidebar width fixes */
+.sidebar, .left-sidebar, .right-sidebar {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 20rem !important; /* 320px maximum */
+}
+
+/* Navigation width fixes */
+.nav-container, .container, .wrapper {
+  max-width: 100vw !important;
+  width: 100% !important;
+}
+
+/* Content width fixes */
+.content, .main-content, .feed {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Modal and popup fixes */
+.modal, .popup, .dropdown {
+  max-width: 90vw !important;
+  width: auto !important;
+}
+
+/* Image fixes */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Table and grid fixes */
+table, .grid, .flex {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Text container fixes */
+.text-container, .post-content, .comment {
+  max-width: 100% !important;
+  word-break: break-word !important;
+}
