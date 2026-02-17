@@ -8,6 +8,7 @@ import { REPOST } from '../graphql/mutations/repostMutations';
 import { SHARE_POST } from '../graphql/mutations/shareMutations';
 import { useState, useMemo, useEffect } from 'react';
 import { PostActions } from '../components/Post/PostActions';
+import { PostStats } from '../components/Post/PostStats';
 import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -18,46 +19,12 @@ import FollowButton from '../components/engagement/FollowButton';
 import TrendingSidebar from '../components/trending/TrendingSidebar';
 import CreatePost from '../components/Post/CreatePost';
 import PostComponent from '../components/Post/Post';
-import { getPosts, generateSamplePosts } from '../services/postService';
+import { getPosts } from '../services/postService';
+import { PostType, SimplePost } from '../types/post';
+import { useFeedManager } from '../hooks/useFeedManager';
 import './HomePage.css';
 
-// Define Post type interface
-interface PostType {
-  id: string;
-  content: string;
-  author: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  likes: number;
-  comments: any[];
-  shares: number;
-  reposts: number;
-  views: number;
-  isLiked: boolean;
-  isReposted: boolean;
-  isSaved: boolean;
-  images?: string[];
-  video?: string;
-}
 
-// Define simple post type for the new centered layout
-interface SimplePost {
-  id: string;
-  userAvatar: string;
-  username: string;
-  handle: string;
-  time: string;
-  content: string;
-  media?: string;
-  comments: number;
-  retweets: number;
-  likes: number;
-  video?: string;
-  images?: string[];
-}
 
 const HomePage: React.FC = () => {
   // State for the new centered layout
@@ -102,7 +69,7 @@ const HomePage: React.FC = () => {
   // Convert PostData to PostType
   const convertToPostType = (postData: any): PostType => {
     return {
-      id: postData.id || Date.now().toString(),
+      id: postData.id || `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: postData.content || '',
       author: postData.author || {
         id: '1',
@@ -128,7 +95,7 @@ const HomePage: React.FC = () => {
     setSimplePosts(simplePosts.filter(post => post.id !== postId));
   };
 
-  // Handle new post - combines local and GraphQL
+  // Handle new post - combines local and GraphQL (SINGLE DECLARATION)
   const handleNewPost = async () => {
     if (!newPostContent.trim() && selectedImages.length === 0 && !selectedVideo) {
       alert('Please add some content');
@@ -144,10 +111,15 @@ const HomePage: React.FC = () => {
           video: selectedVideo 
         } 
       });
+
+      setNewPostContent('');
+      setSelectedImages([]);
+      setSelectedVideo(null);
+
       
       // Also add to local state for immediate display
       const newPost: SimplePost = {
-        id: Date.now().toString(),
+        id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
         username: user?.name || 'Current User',
         handle: user?.username || 'currentuser',
@@ -171,7 +143,7 @@ const HomePage: React.FC = () => {
       
       // Fallback: Save locally only
       const newPost: SimplePost = {
-        id: Date.now().toString(),
+        id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
         username: user?.name || 'Current User',
         handle: user?.username || 'currentuser',
@@ -193,24 +165,52 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Handle post created from CreatePost component
-  const handlePostCreated = (newPostData: any) => {
+  // Handle post created from CreatePost component (SINGLE DECLARATION)
+ // Inside HomePage.tsx
+
+// UPDATE: Single point of truth for creating posts
+const handlePostCreated = async (newPostData: any) => {
+  setUploading(true);
+  try {
+    // 1. Send to GraphQL
+    await createPost({ 
+      variables: { 
+        content: newPostData.content,
+        images: newPostData.images || [],
+        video: newPostData.video || null 
+      } 
+    });
+
+    // 2. Local Update (Only if not already handled by GraphQL refetch)
     const newPost: SimplePost = {
-      id: Date.now().toString(),
+      id: `post-${Date.now()}`,
       userAvatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=User',
       username: user?.name || 'Current User',
       handle: user?.username || 'currentuser',
       time: 'just now',
-      content: newPostData.content || '',
+      content: newPostData.content,
       images: newPostData.images || [],
       video: newPostData.video || undefined,
       comments: 0,
       retweets: 0,
       likes: 0
     };
+
+    setSimplePosts(prev => [newPost, ...prev]);
     
-    setSimplePosts([newPost, ...simplePosts]);
-  };
+    // Reset local fields if using the "Centered" inline layout
+    setNewPostContent('');
+    setSelectedImages([]);
+    setSelectedVideo(null);
+
+  } catch (err) {
+    console.error('Backend failed, saving locally:', err);
+    alert('Post saved locally (backend connection failed)');
+    // Fallback logic here if needed
+  } finally {
+    setUploading(false);
+  }
+};
 
   // Handle image upload for centered layout
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,17 +277,6 @@ const HomePage: React.FC = () => {
     
     fetchLocalPosts();
   }, []);
-  
-  // Generate sample posts
-  const handleGenerateSamplePosts = async () => {
-    try {
-      const samplePostsData = await generateSamplePosts();
-      const convertedPosts = samplePostsData.map(convertToPostType);
-      setLocalPosts(convertedPosts);
-    } catch (error) {
-      console.error('Error generating sample posts:', error);
-    }
-  };
   
   // GraphQL queries and mutations
   const { loading, error, data } = useQuery(GET_FEED, {
@@ -516,72 +505,103 @@ const HomePage: React.FC = () => {
     <div className="posts-feed-centered">
       {simplePosts.map((post: SimplePost) => (
         <div key={post.id} className="post-card-centered">
+          {/* Post Header - Reusing your existing styling */}
           <div className="post-header">
-            <img src={post.userAvatar} alt={post.username} />
+            <img src={post.userAvatar} alt={post.username} className="post-avatar" />
             <div className="post-user-info">
-              <strong>{post.username}</strong>
-              <span>@{post.handle} · {post.time}</span>
+              <div className="post-username">{post.username}</div>
+              <div className="post-handle-time">
+                {post.handle} · {post.time}
+              </div>
             </div>
-            {/* Delete button - only show for current user's posts */}
+            {/* Delete button */}
             {(user?.username === post.handle.replace('@', '') || !user) && (
               <button 
                 className="delete-post-btn"
                 onClick={() => handleDeletePost(post.id)}
                 title="Delete post"
               >
-                <i className="fas fa-trash"></i>
+                <svg viewBox="0 0 24 24" width="18" height="18">
+                  <path
+                    fill="currentColor"
+                    d="M3 6h18v2H3V6zm4 5v10h10V11H7zm2 2h6v6H9v-6zm.5-7l1-1h3l1 1H16v2H8V6h1.5z"
+                  />
+                </svg>
               </button>
             )}
           </div>
           
-          <div className="post-content">
+          {/* Post Content */}
+          <div className="post-content-centered">
             <p>{post.content}</p>
+            
+            {/* Media */}
+            {post.media && (
+              <div className="post-media-centered">
+                <img src={post.media} alt="Post media" />
+              </div>
+            )}
+            
             {post.images && post.images.length > 0 && (
-              <div className="post-images">
-                {post.images.map((img: string, index: number) => (
-                  <img key={index} src={img} alt="Post media" className="post-media" />
+              <div className={`post-images-grid ${post.images.length > 1 ? 'multiple-images' : ''}`}>
+                {post.images.slice(0, 4).map((img: string, index: number) => (
+                  <div key={index} className="post-image-item">
+                    <img src={img} alt={`Post image ${index + 1}`} />
+                  </div>
                 ))}
               </div>
             )}
+            
             {post.video && (
-              <div className="post-video">
+              <div className="post-video-centered">
                 <video src={post.video} controls />
               </div>
             )}
           </div>
           
-          <div className="post-engagement">
-            <button 
-              className="engagement-btn"
-              onClick={() => handleCommentSubmit(post.id)}
-            >
-              <i className="far fa-comment"></i> {post.comments}
-            </button>
-            <button 
-              className="engagement-btn"
-              onClick={() => handleSimpleRepost(post.id)}
-              title="Repost"
-            >
-              <i className="fas fa-retweet"></i> {post.retweets}
-            </button>
-            <button 
-              className="engagement-btn"
-              onClick={() => handleSimpleLike(post.id)}
-              title="Like"
-            >
-              <i className="far fa-heart"></i> {post.likes}
-            </button>
-            <button 
-              className="engagement-btn"
-              onClick={() => handleSimpleShare(post.id)}
-              title="Share"
-            >
-              <i className="far fa-share-square"></i>
-            </button>
+          {/* Post Stats - Using your existing PostStats component */}
+          <div className="post-stats-centered">
+            <PostStats
+              likes={post.likes}
+              comments={post.comments}
+              reposts={post.retweets}
+              views={0} // Add if you have view count
+              onViewDetails={(type: 'likes' | 'reposts') => console.log(`View ${type} details`)}
+            />
+          </div>
+          
+          {/* Post Actions - Using your existing PostActions component */}
+          <div className="post-actions-centered">
+            <PostActions
+              postId={post.id}
+              likes={post.likes}
+              comments={post.comments}
+              reposts={post.retweets}
+              shares={0} // Add if you have share count
+              isLiked={false} // Add logic if you track this
+              isReposted={false} // Add logic if you track this
+              isSaved={false} // Add logic if you track this
+              onLike={() => handleSimpleLike(post.id)}
+              onComment={() => {
+                const content = commentInputs[post.id]?.trim();
+                if (content) {
+                  handleCommentSubmit(post.id);
+                } else {
+                  // Focus on comment input or open modal
+                  const inputElement = document.querySelector(`[data-post-id="${post.id}"]`) as HTMLInputElement;
+                  if (inputElement) {
+                    inputElement.focus();
+                  }
+                }
+              }}
+              onRepost={() => handleSimpleRepost(post.id)}
+              onShare={() => handleSimpleShare(post.id)}
+              onSave={() => handleSave(post.id)}
+            />
           </div>
 
           {/* Comment Input */}
-          <div className="comment-input-section">
+          <div className="comment-input-section-centered">
             <input
               type="text"
               placeholder="Add a comment..."
@@ -595,7 +615,15 @@ const HomePage: React.FC = () => {
                   handleCommentSubmit(post.id);
                 }
               }}
+              data-post-id={post.id}
             />
+            <button 
+              onClick={() => handleCommentSubmit(post.id)}
+              disabled={!commentInputs[post.id]?.trim()}
+              className="comment-submit-btn"
+            >
+              Post
+            </button>
           </div>
         </div>
       ))}
@@ -694,25 +722,11 @@ const HomePage: React.FC = () => {
             </div>
           </div>
           
-          {/* Generate Sample Posts Button */}
-          <div style={{ margin: '20px 0', textAlign: 'center' }}>
-            <button 
-              onClick={handleGenerateSamplePosts}
-              className="generate-posts-btn"
-              disabled={loadingLocalPosts}
-            >
-              {loadingLocalPosts ? 'Loading...' : 'Generate Sample Posts'}
-            </button>
-          </div>
-          
-          {/* Posts Feed */}
-          {renderPosts()}
-          
           {/* Also show local posts */}
           {localPosts.length > 0 && (
             <div className="local-posts">
               <h3>Local Posts</h3>
-              {localPosts.map((post) => (
+              {localPosts.map((post: PostType) => (
                 <PostComponent 
                   key={post.id} 
                   post={post}
@@ -725,6 +739,9 @@ const HomePage: React.FC = () => {
               ))}
             </div>
           )}
+          
+          {/* Posts Feed */}
+          {renderPosts()}
         </div>
       </>
     );

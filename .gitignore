@@ -29,4 +29,7 @@ Thumbs.db
 
 # Logs
 logs
-*.log
+*.log.env
+.env.local
+.env.development
+.env.production

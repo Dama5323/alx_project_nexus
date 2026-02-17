@@ -1,51 +1,76 @@
-# 🚀 Dynamic Social Media Feed
+#  Dynamic Social Media Feed
 
-A modern, production-ready social media feed application built with React, TypeScript, and GraphQL.
+A modern, full-stack social feed application built with React, TypeScript, GraphQL, and Supabase. This project was developed as part of the ALX Software Engineering program to demonstrate proficiency in building scalable, real-time social media platforms.
 
-## ✨ Features
+## 🌐 Live Demo
+
+[View Live Demo](alx-social-feed.vercel.app/cel.app)
+
+##  Features
 
 - **Dynamic Post Loading**: Efficient data fetching with GraphQL
 - **Real-time Interactions**: Like, comment, share, and repost functionality
 - **Advanced Reactions**: Multiple reaction types (Like, Love, Laugh, Wow, Sad, Angry)
 - **Post Analytics**: View counts, engagement metrics, and detailed insights
+- **Multi-provider Authentication**: Email/password, Google, and LinkedIn login
+- **Media Upload**: Image and video support with Cloudinary
 - **Infinite Scrolling**: Seamless content loading as you scroll
 - **Responsive Design**: Optimized for mobile, tablet, and desktop
 - **Dark Mode Support**: Theme switching with user preference persistence
-- **Performance Optimized**: Code splitting, lazy loading, and caching strategies
 
-## 🛠️ Tech Stack
 
-- **Frontend**: React 18, TypeScript
+## Tech Stack
+
+### Frontend
+- **Framework**: React 18, TypeScript
 - **State Management**: Apollo Client (GraphQL)
 - **Routing**: React Router v6
 - **Styling**: CSS3 with CSS Variables
-- **Date Handling**: date-fns
-- **Build Tool**: Create React App
+- **Authentication**: Supabase Auth (Email/Password, Google, LinkedIn)
+- **Media**: Cloudinary for image/video optimization
 
-## 📋 Prerequisites
+### Backend
+- **API**: GraphQL (Apollo Server)
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Storage**: Cloudinary
 
-- Node.js 16+ and npm/yarn
-- GraphQL backend API (endpoint configuration required)
+## Prerequisite
 
-## 🚀 Getting Started
+- Node.js 18+ and npm/yarn
+- Supabase account (for auth and database)
+- Cloudinary account (for media uploads)
+- GraphQL backend API
+
+##  Getting Started
 
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/social-feed.git
-cd social-feed
+git clone https://github.com/Dama5323/alx_project_nexus.git
+cd alx_project_nexus/social-feed
 
 # Install dependencies
 npm install
 
 # Copy environment variables
 cp .env.example .env
-
-# Update .env with your API endpoint
-# REACT_APP_GRAPHQL_ENDPOINT=your_graphql_endpoint_here
 ```
 
-### Development
+## Environment Configuration
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# GraphQL Endpoint
+VITE_GRAPHQL_ENDPOINT=your_graphql_endpoint
+
+# Cloudinary
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+```
+
+## Development
 ```bash
 # Start development server
 npm start
@@ -55,31 +80,52 @@ npm test
 
 # Build for production
 npm run build
-```
 
 The app will be available at `http://localhost:3000`
+```
 
-## 📁 Project Structure
+
+## Project Structure
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── common/         # Common components (Button, Avatar, Modal, etc.)
-│   ├── Feed/           # Feed-related components
-│   ├── Post/           # Post components
-│   ├── Comment/        # Comment components
-│   ├── interactions/   # Interaction components (Share, Repost, etc.)
-│   └── analytics/      # Analytics components
+│   ├── Auth/           # Authentication components (Google, LinkedIn login)
+│   ├── Post/           # Post components with interactions
+│   ├── Comment/        # Comment threads and replies
+│   ├── Feed/           # Infinite scrolling feed
+│   ├── analytics/      # Post performance metrics
+│   ├── notifications/  # Real-time user alerts
+│   └── trending/       # Popular hashtags and topics
 ├── context/            # React Context providers
-├── graphql/            # GraphQL queries, mutations, and fragments
+├── graphql/            # GraphQL queries and mutations
 ├── hooks/              # Custom React hooks
 ├── pages/              # Page components
-├── services/           # Business logic services
+├── services/           # Supabase and API services
 ├── types/              # TypeScript type definitions
-├── utils/              # Utility functions and helpers
-└── styles/             # Global styles
+└── utils/              # Utility functions `   
 ```
 
-## 🎨 Key Features Implementation
+## Authentication
+The app supports multiple authentication methods through Supabase:
+
+    - Email/Password - Standard registration and login
+
+    - Google OAuth - One-click login with Google account
+
+    - LinkedIn OAuth - Professional network authentication
+
+Authentication flow:
+
+    1. User selects login method
+
+    2. Supabase handles OAuth redirects
+
+    3. JWT token stored for API authorization
+
+    4. User session persisted across page reloads
+
+
+## Key Features Implementation
 
 ### Post Interactions
 - Like/Unlike posts with optimistic updates
@@ -102,7 +148,7 @@ src/
 - Infinite scroll pagination
 - Keyboard shortcuts
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 ```env
@@ -116,7 +162,7 @@ Your backend should support the following operations:
 - Queries: `feed`, `post`, `user`, `postAnalytics`
 - Mutations: `createPost`, `likePost`, `addComment`, `addReaction`, `repost`, `sharePost`
 
-## 📱 Progressive Web App (PWA)
+## Progressive Web App (PWA)
 
 The app includes PWA support:
 - Offline capability
@@ -169,6 +215,15 @@ netlify deploy --prod
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+
+2. Create your feature branch (git checkout -b feature/AmazingFeature)
+
+3. Commit your changes (git commit -m 'Add some AmazingFeature')
+
+4. Push to the branch (git push origin feature/AmazingFeature)
+
+5. Open a Pull Request
 
 ## 📄 License
 
@@ -176,14 +231,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Author
 
-Your Name - [@yourusername](https://github.com/yourusername)
+Your Name - [Damaris Chege](https://github.com/Dama5323)
 
 ## 🙏 Acknowledgments
 
-- React team for the amazing framework
-- Apollo team for GraphQL client
-- date-fns for date manipulation
-- Community contributors
+- ALX Africa for the comprehensive software engineering program
+
+- Supabase team for excellent authentication and database services
+
+- Cloudinary for media optimization
+
+- React and Apollo communities for amazing tools
 
 ---
 

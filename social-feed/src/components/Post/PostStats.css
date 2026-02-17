@@ -1,11 +1,12 @@
 .post-stats {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-top: 1px solid #e1e8ed;
-  border-bottom: 1px solid #e1e8ed;
+  justify-content: flex-start; /* Align numbers to the left */
+  padding: 12px 16px 8px 16px; /* Reduced bottom padding */
+  border-top: 1px solid #eff3f4; /* Use a lighter, modern border color */
+  border-bottom: none; /* REMOVE THIS */
   margin-top: 12px;
+  gap: 20px;
 }
 
 .post-stats__engagement {
